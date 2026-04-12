@@ -208,7 +208,7 @@ class App(MDApp):
     # -----------------------
     def open_github(self):
         try:
-            webbrowser.open("https://github.com/")
+            webbrowser.open("https://github.com/Saros72/PyServe")
             self.add_log("Opening GitHub/PyServe")
         except Exception as e:
             self.add_error(f"GITHUB ERROR: {e}")
