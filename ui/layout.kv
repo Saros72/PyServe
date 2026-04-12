@@ -1,1 +1,136 @@
+MDScreen:
+    MDNavigationLayout:
 
+        MDScreenManager:
+            id: screen_manager
+
+            MDScreen:
+                name: "main"
+
+                MDBoxLayout:
+                    orientation: "vertical"
+
+                    MDTopAppBar:
+                        title: "PyServe"
+                        anchor_title: "left"
+                        elevation: 4
+                        md_bg_color: app.custom_blue
+                        left_action_items: [["menu", lambda x: nav_drawer.set_state("open")]]
+
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        padding: "10dp"
+                        spacing: "10dp"
+
+                        MDBoxLayout:
+                            size_hint_y: None
+                            height: dp(70)
+                            spacing: "10dp"
+
+                            MDLabel:
+                                text: app.url_display if app.url_display else "http://localhost:9666"
+                                halign: "left"
+                                valign: "middle"
+                                font_style: "H6"
+                                theme_text_color: "Primary"
+                                shorten: True
+                                shorten_from: "right"
+
+                            # WEB BUTTON
+                            MDCard:
+                                size_hint: None, None
+                                size: dp(72), dp(72)
+                                radius: [12]
+                                elevation: 2
+                                md_bg_color: 0.98, 0.98, 0.98, 1
+
+                                FloatLayout:
+
+                                    Image:
+                                        source: "assets/web_green.png" if app.running else "assets/web_red.png"
+                                        size_hint: None, None
+                                        size: dp(50), dp(50)
+                                        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+                                    Button:
+                                        size_hint: 1, 1
+                                        pos_hint: {"x": 0, "y": 0}
+                                        background_normal: ""
+                                        background_down: ""
+                                        background_color: 0, 0, 0, 0
+                                        on_release: app.open_web()
+                                        disabled: not app.running
+
+                        # LOG
+                        MDCard:
+                            size_hint: 1, 1
+                            elevation: 2
+                            radius: [12]
+                            padding: "10dp"
+
+                            ScrollView:
+                                MDLabel:
+                                    id: log_label
+                                    text: ""
+                                    halign: "left"
+                                    valign: "top"
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+                                    text_size: self.width, None
+
+                        # BUTTON
+                        MDBoxLayout:
+                            size_hint_y: None
+                            height: dp(80)
+                            padding: [0, 5, 0, 5]
+
+                            MDRaisedButton:
+                                text: app.button_text
+                                font_style: "H6"
+                                size_hint: 0.7, 1
+                                pos_hint: {"center_x": 0.5}
+                                md_bg_color: app.custom_blue
+                                on_release: app.toggle_server()
+
+        # -----------------------
+        # DRAWER (FIXED STRUKTURA)
+        # -----------------------
+        MDNavigationDrawer:
+            id: nav_drawer
+            radius: (0, 16, 16, 0)
+
+            MDBoxLayout:
+                orientation: 'vertical'
+
+                MDNavigationDrawerMenu:
+
+                    MDNavigationDrawerItem:
+                        icon: "puzzle"
+                        text: "Plugins"
+                        on_release:
+                            app.root.ids.nav_drawer.set_state("close")
+                            app.open_plugins()
+
+                    MDNavigationDrawerDivider:
+
+                    MDNavigationDrawerItem:
+                        icon: "email"
+                        text: "E-mail"
+                        on_release:
+                            app.root.ids.nav_drawer.set_state("close")
+                            app.send_email()
+
+                    MDNavigationDrawerItem:
+                        icon: "github"
+                        text: "GitHub"
+                        on_release:
+                            app.root.ids.nav_drawer.set_state("close")
+                            app.open_github()
+
+                Widget:
+
+                MDLabel:
+                    text: "© 2026 PyServe v1.0.0\nCreated by Sároš"
+                    halign: "center"
+                    size_hint_y: None
+                    height: self.texture_size[1] + dp(20)
