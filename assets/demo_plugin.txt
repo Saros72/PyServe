@@ -1,1 +1,125 @@
+from bottle import response, redirect
+import time, json
 
+
+# -----------------------
+# DEMO STREAMS
+# -----------------------
+STREAMS = {
+    "low": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+    "mid": "https://test-streams.mux.dev/test_001/stream.m3u8",
+    "high": "https://sample.vodobox.net/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8"
+}
+
+
+# -----------------------
+# REGISTER
+# -----------------------
+def register(app):
+
+    # -----------------------
+    # 1. HTML PAGE (UI)
+    # -----------------------
+    @app.route("/demo")
+    def demo_page():
+        return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Demo Plugin</title>
+            <style>
+                body {
+                    background: #121212;
+                    color: #fff;
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 20px;
+                    text-align: center;
+                }
+
+                h1 {
+                    font-size: 2em;
+                    margin-bottom: 10px;
+                }
+
+                p {
+                    color: #aaa;
+                }
+
+                .container {
+                    max-width: 500px;
+                    margin: auto;
+                }
+
+                .btn {
+                    display: block;
+                    padding: 15px;
+                    margin: 10px 0;
+                    background: #1f1f1f;
+                    border-radius: 10px;
+                    text-decoration: none;
+                    color: #fff;
+                    font-size: 1.1em;
+                    transition: 0.2s;
+                }
+
+                .btn:hover {
+                    background: #333;
+                }
+
+                .api {
+                    background: #2a2a2a;
+                }
+
+                .stream-low { background: #2e7d32; }
+                .stream-mid { background: #f9a825; }
+                .stream-high { background: #c62828; }
+            </style>
+        </head>
+
+        <body>
+            <div class="container">
+                <h1>🚀 Demo Plugin</h1>
+                <p>Test server endpoints</p>
+
+                <a class="btn api" href="/demo/api">📡 API JSON</a>
+
+                <a class="btn stream-low" href="/demo/stream/low">🎬 Low Quality</a>
+                <a class="btn stream-mid" href="/demo/stream/mid">🎬 Medium Quality</a>
+                <a class="btn stream-high" href="/demo/stream/high">🎬 High Quality</a>
+
+                <hr style="margin:20px 0; border-color:#333;">
+
+                <p>Player (HLS supported)</p>
+                <video controls width="100%">
+                    <source src="/demo/stream/high" type="application/x-mpegURL">
+                </video>
+            </div>
+        </body>
+        </html>
+        """
+
+
+    # -----------------------
+    # 2. REST API (JSON)
+    # -----------------------
+    @app.route("/demo/api")
+    def demo_api():
+        response.content_type = "application/json"
+
+        data = {
+            "status": "ok",
+            "time": time.time(),
+            "streams": STREAMS
+        }
+        return json.dumps(data, indent=4)
+
+
+    # -----------------------
+    # 3. STREAM REDIRECT
+    # -----------------------
+    @app.route("/demo/stream/<quality>")
+    def demo_stream(quality):
+        stream = STREAMS.get(quality, STREAMS["low"])
+        return redirect(stream)
