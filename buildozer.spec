@@ -33,10 +33,6 @@ android.permissions = INTERNET,POST_NOTIFICATIONS,FOREGROUND_SERVICE,WRITE_EXTER
 android.features = android.software.leanback, android.hardware.touchscreen=false
 
 
-android.intent_filters = [ \
-    {'action': 'android.intent.action.MAIN', \
-     'category': ['android.intent.category.LAUNCHER', 'android.intent.category.LEANBACK_LAUNCHER']}]
-
 
 # --- ARCH ---
 android.archs = arm64-v8a,armeabi-v7a
