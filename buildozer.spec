@@ -33,9 +33,9 @@ android.permissions = INTERNET,POST_NOTIFICATIONS,FOREGROUND_SERVICE,WRITE_EXTER
 android.archs = arm64-v8a,armeabi-v7a
 
 # icon
-icon.filename = assets/icon.jpeg
-presplash.filename = assets/icon.jpeg
-android.presplash_color = #FFFFFF
+icon.filename = assets/icon.png
+presplash.filename = assets/icon.png
+android.presplash_color = #0D47A1
 
 # --- BOOTSTRAP ---
 p4a.bootstrap = sdl2
