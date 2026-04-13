@@ -79,7 +79,7 @@ class App(MDApp):
 
         # 👉 OVLÁDÁNÍ TV / GAMEPAD
         Window.bind(on_key_down=self._on_keyboard)
-        Window.bind(on_key_up=self._on_keyboard_up)
+        Window.bind(on_key_up=self._on_keyboard_up)   # 🔥 přidáno
         Window.bind(on_joy_button_down=self._on_joy)
 
         return root
@@ -88,22 +88,16 @@ class App(MDApp):
         self.url_display = "http://localhost:9666"
         self.add_log("=== APP START ===")
 
-        # 🔥 ORIENTATION LOCK (FIXED)
+        # 🔥 ORIENTATION LOCK
         if ANDROID:
             try:
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
-                ActivityInfo = autoclass('android.content.pm.ActivityInfo')
-
                 activity = PythonActivity.mActivity
 
                 if self.is_tv:
-                    activity.setRequestedOrientation(
-                        ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                    )
+                    activity.setRequestedOrientation(0)  # landscape
                 else:
-                    activity.setRequestedOrientation(
-                        ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                    )
+                    activity.setRequestedOrientation(1)  # portrait
 
             except Exception as e:
                 print(f"Orientation error: {e}")
@@ -129,12 +123,15 @@ class App(MDApp):
             try:
                 btn = self.root.ids.start_button
 
+                # uložíme původní barvu
                 normal_color = btn.md_bg_color[:]
 
+                # efekt "stisku prstem"
                 btn.md_bg_color = [
                     max(0, c * 0.65) for c in normal_color[:3]
                 ] + [1]
 
+                # spustí stejný efekt jako fyzický tap
                 def release(dt):
                     btn.trigger_action(duration=0.1)
 
@@ -149,13 +146,16 @@ class App(MDApp):
             except Exception as e:
                 print(f"Chyba triggeru: {e}")
 
+        # fallback
         self.toggle_server()
 
     def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
+        # jen blokujeme (aby nebyl double trigger)
         if key in (13, 271, 23):
             return True
         return False
 
+    # 🔥 KLÍČOVÉ PRO XIAOMI
     def _on_keyboard_up(self, window, key, scancode):
         if key in (13, 271, 23):
             self._trigger_button()
@@ -163,6 +163,7 @@ class App(MDApp):
         return False
 
     def _on_joy(self, window, stick_id, button_id):
+        # OK Gamepad
         if button_id in (0, 96, 23):
             self._trigger_button()
             return True
