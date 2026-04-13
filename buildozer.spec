@@ -35,7 +35,7 @@ android.archs = arm64-v8a,armeabi-v7a
 # icon
 icon.filename = assets/icon.png
 presplash.filename = assets/icon.png
-android.presplash_color = #0D47A1
+android.presplash_color = #FFFFFF
 
 # --- BOOTSTRAP ---
 p4a.bootstrap = sdl2
