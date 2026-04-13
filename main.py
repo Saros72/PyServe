@@ -88,20 +88,6 @@ class App(MDApp):
         self.url_display = "http://localhost:9666"
         self.add_log("=== APP START ===")
 
-        # 🔥 ORIENTATION LOCK
-        if ANDROID:
-            try:
-                PythonActivity = autoclass('org.kivy.android.PythonActivity')
-                activity = PythonActivity.mActivity
-
-                if self.is_tv:
-                    activity.setRequestedOrientation(0)  # landscape
-                else:
-                    activity.setRequestedOrientation(1)  # portrait
-
-            except Exception as e:
-                print(f"Orientation error: {e}")
-
         self.update_system_bars()
         self.setup_plugin_folder()
 
