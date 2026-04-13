@@ -45,17 +45,43 @@ class App(MDApp):
     url_display = StringProperty("")
     button_text = StringProperty("START")
 
-    # 🔥 důležité pro KV (ikona + button)
     running = BooleanProperty(False)
 
     def build(self):
         self.log_buffer = []
         self.log_queue = []
 
-        # 👉 postupné vypisování logu
-        Clock.schedule_interval(self._process_log_queue, 0.2)
+        Clock.schedule_interval(self._process_log_queue, 0.1)
 
-        return Builder.load_file("ui/layout.kv")
+        # -----------------------
+        # TV / MOBILE KV SWITCH
+        # -----------------------
+        self.is_tv = False
+
+        try:
+            if ANDROID:
+                UiModeManager = autoclass('android.app.UiModeManager')
+                Context = autoclass('android.content.Context')
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
+
+                context = PythonActivity.mActivity
+                ui_mode = context.getSystemService(Context.UI_MODE_SERVICE)
+
+                # TV mode = 4
+                if ui_mode.getCurrentModeType() == 4:
+                    self.is_tv = True
+        except:
+            self.is_tv = False
+
+        kv_file = "ui/layout_tv.kv" if self.is_tv else "ui/layout.kv"
+
+        root = Builder.load_file(kv_file)
+
+        # 👉 OVLÁDÁNÍ TV / GAMEPAD
+        Window.bind(on_key_down=self._on_keyboard)
+        Window.bind(on_joy_button_down=self._on_joy)
+
+        return root
 
     def on_start(self):
         self.url_display = "http://localhost:9666"
@@ -74,13 +100,62 @@ class App(MDApp):
             self.add_log("Server not running")
 
     # -----------------------
+    # 🎮 TV / REMOTE CONTROL
+    # -----------------------
+    def _trigger_button(self):
+
+        if hasattr(self, "root") and self.root:
+            try:
+                btn = self.root.ids.start_button
+
+                # uložíme původní barvu
+                normal_color = btn.md_bg_color[:]
+
+                # efekt "stisku prstem"
+                btn.md_bg_color = [
+                    max(0, c * 0.65) for c in normal_color[:3]
+                ] + [1]
+
+                # spustí stejný efekt jako fyzický tap
+                def release(dt):
+                    btn.trigger_action(duration=0.1)
+
+                    def reset_color(dt2):
+                        btn.md_bg_color = normal_color
+
+                    Clock.schedule_once(reset_color, 0.1)
+
+                Clock.schedule_once(release, 0.05)
+                return
+
+            except Exception as e:
+                print(f"Chyba triggeru: {e}")
+
+        # fallback
+        self.toggle_server()
+
+    def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
+        # ENTER / OK / DPAD CENTER
+        if key in (13, 271, 23):
+            self._trigger_button()
+            return True
+        return False
+
+    def _on_joy(self, window, stick_id, button_id):
+        # OK Gamepad
+        if button_id in (0, 96, 23):
+            self._trigger_button()
+            return True
+        return False
+
+    # -----------------------
     # 🎨 UI
     # -----------------------
     def update_system_bars(self):
         set_bars_colors(self.custom_blue, self.custom_blue, "Dark")
 
     # -----------------------
-    # 📜 LOG SYSTEM (QUEUE)
+    # 📜 LOG SYSTEM
     # -----------------------
     def add_log(self, msg):
         self.log_queue.append(msg)
@@ -165,8 +240,6 @@ class App(MDApp):
                 self.add_error(f"SERVICE START ERROR: {e}")
                 return
 
-            self.add_log("Checking server...")
-
             def check(dt):
                 if is_server_running():
                     self.running = True
@@ -208,7 +281,7 @@ class App(MDApp):
     # -----------------------
     def open_github(self):
         try:
-            webbrowser.open("https://github.com/Saros72/PyServe")
+            webbrowser.open("https://github.com/")
             self.add_log("Opening GitHub/PyServe")
         except Exception as e:
             self.add_error(f"GITHUB ERROR: {e}")
