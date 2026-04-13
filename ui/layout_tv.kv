@@ -1,5 +1,6 @@
 MDScreen:
     md_bg_color: 0.82, 0.90, 1, 1
+
     MDNavigationLayout:
 
         MDScreenManager:
@@ -16,7 +17,6 @@ MDScreen:
                         anchor_title: "left"
                         elevation: 0
                         md_bg_color: app.custom_blue
-                        left_action_items: [["menu", lambda x: nav_drawer.set_state("open")]]
 
                     MDBoxLayout:
                         orientation: "vertical"
@@ -44,10 +44,8 @@ MDScreen:
                                     valign: "middle"
                                     theme_text_color: "Custom"
                                     text_color: app.custom_blue
-
                                     font_style: "H6"
                                     bold: True
-
                                     size_hint_x: 1
                                     shorten: False
                                     text_size: self.size
@@ -61,14 +59,6 @@ MDScreen:
                                         size_hint: None, None
                                         size: dp(42), dp(42)
                                         pos_hint: {"center_x": 0.5, "center_y": 0.5}
-
-                                    Button:
-                                        size_hint: 1, 1
-                                        background_normal: ""
-                                        background_down: ""
-                                        background_color: 0, 0, 0, 0
-                                        on_release: app.open_web()
-                                        disabled: not app.running
 
                         # LOG
                         MDCard:
@@ -101,44 +91,3 @@ MDScreen:
                                 pos_hint: {"center_x": 0.5}
                                 md_bg_color: app.custom_blue
                                 on_release: app.toggle_server()
-
-        MDNavigationDrawer:
-            id: nav_drawer
-#            md_bg_color: 0.82, 0.90, 1, 1
-            radius: (0, 16, 16, 0)
-
-            MDBoxLayout:
-                orientation: 'vertical'
-
-                MDNavigationDrawerMenu:
-
-                    MDNavigationDrawerItem:
-                        icon: "puzzle"
-                        text: "Plugins"
-                        on_release:
-                            app.root.ids.nav_drawer.set_state("close")
-                            app.open_plugins()
-
-                    MDNavigationDrawerDivider:
-
-                    MDNavigationDrawerItem:
-                        icon: "email"
-                        text: "E-mail"
-                        on_release:
-                            app.root.ids.nav_drawer.set_state("close")
-                            app.send_email()
-
-                    MDNavigationDrawerItem:
-                        icon: "github"
-                        text: "GitHub"
-                        on_release:
-                            app.root.ids.nav_drawer.set_state("close")
-                            app.open_github()
-
-                Widget:
-
-                MDLabel:
-                    text: "© 2026 PyServe v1.0.0\nCreated by Sároš"
-                    halign: "center"
-                    size_hint_y: None
-                    height: self.texture_size[1] + dp(20)
