@@ -29,11 +29,6 @@ android.target = 30
 # permissions
 android.permissions = INTERNET,POST_NOTIFICATIONS,FOREGROUND_SERVICE,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,MANAGE_EXTERNAL_STORAGE
 
-
-android.features = android.software.leanback, android.hardware.touchscreen=false
-
-
-
 # --- ARCH ---
 android.archs = arm64-v8a,armeabi-v7a
 
