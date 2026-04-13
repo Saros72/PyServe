@@ -18,7 +18,7 @@ requirements = python3,kivy,bottle,requests,kivymd,pillow,pyjnius,plyer,bs4,webs
 services = server:service.py:foreground:sticky
 
 # --- UI ---
-orientation = portrait
+orientation = all
 fullscreen = 0
 
 # --- ANDROID ---

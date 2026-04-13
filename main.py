@@ -79,6 +79,7 @@ class App(MDApp):
 
         # 👉 OVLÁDÁNÍ TV / GAMEPAD
         Window.bind(on_key_down=self._on_keyboard)
+        Window.bind(on_key_up=self._on_keyboard_up)   # 🔥 přidáno
         Window.bind(on_joy_button_down=self._on_joy)
 
         return root
@@ -86,6 +87,20 @@ class App(MDApp):
     def on_start(self):
         self.url_display = "http://localhost:9666"
         self.add_log("=== APP START ===")
+
+        # 🔥 ORIENTATION LOCK
+        if ANDROID:
+            try:
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
+                activity = PythonActivity.mActivity
+
+                if self.is_tv:
+                    activity.setRequestedOrientation(0)  # landscape
+                else:
+                    activity.setRequestedOrientation(1)  # portrait
+
+            except Exception as e:
+                print(f"Orientation error: {e}")
 
         self.update_system_bars()
         self.setup_plugin_folder()
@@ -135,7 +150,13 @@ class App(MDApp):
         self.toggle_server()
 
     def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
-        # ENTER / OK / DPAD CENTER
+        # jen blokujeme (aby nebyl double trigger)
+        if key in (13, 271, 23):
+            return True
+        return False
+
+    # 🔥 KLÍČOVÉ PRO XIAOMI
+    def _on_keyboard_up(self, window, key, scancode):
         if key in (13, 271, 23):
             self._trigger_button()
             return True
