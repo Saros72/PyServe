@@ -18,7 +18,7 @@ requirements = python3,kivy,bottle,requests,kivymd,pillow,pyjnius,plyer,bs4,webs
 services = server:service.py:foreground:sticky
 
 # --- UI ---
-orientation = sensor
+orientation = portrait
 fullscreen = 0
 
 # --- ANDROID ---
@@ -28,6 +28,15 @@ android.target = 30
 
 # permissions
 android.permissions = INTERNET,POST_NOTIFICATIONS,FOREGROUND_SERVICE,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,MANAGE_EXTERNAL_STORAGE
+
+
+android.features = android.software.leanback, android.hardware.touchscreen=false
+
+
+android.intent_filters = [ \
+    {'action': 'android.intent.action.MAIN', \
+     'category': ['android.intent.category.LAUNCHER', 'android.intent.category.LEANBACK_LAUNCHER']}]
+
 
 # --- ARCH ---
 android.archs = arm64-v8a,armeabi-v7a
