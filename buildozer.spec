@@ -21,18 +21,19 @@ services = server:service.py:foreground:sticky
 orientation = portrait
 fullscreen = 0
 
-# --- ANDROID ---
-android.api = 30
+# --- ANDROID SDK ---
+android.api = 33
 android.minapi = 21
-android.target = 30
+android.target = 33
 
-# permissions
-android.permissions = INTERNET,POST_NOTIFICATIONS,FOREGROUND_SERVICE,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,MANAGE_EXTERNAL_STORAGE
+
+android.permissions = INTERNET,POST_NOTIFICATIONS,FOREGROUND_SERVICE,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
+
 
 # --- ARCH ---
 android.archs = arm64-v8a,armeabi-v7a
 
-# icon
+# --- ICON ---
 icon.filename = assets/icon.png
 presplash.filename = assets/icon.png
 android.presplash_color = #FFFFFF
