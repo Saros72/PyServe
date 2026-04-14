@@ -20,7 +20,17 @@ def check_plugins(log_func, error_func):
         error_func("Plugin directory not found")
         return
 
-    for folder in os.listdir(PLUGIN_DIR):
+    # 🔥 OŠETŘENÍ PERMISSION
+    try:
+        folders = os.listdir(PLUGIN_DIR)
+    except PermissionError:
+        error_func("No permission to access plugin directory")
+        return
+    except Exception as e:
+        error_func(f"PLUGIN ACCESS ERROR: {e}")
+        return
+
+    for folder in folders:
         plugin_path = os.path.join(PLUGIN_DIR, folder)
 
         if not os.path.isdir(plugin_path):
@@ -47,11 +57,14 @@ def check_plugins(log_func, error_func):
             error_func(f"{folder}: ERROR")
 
             # FILE log jen čisté info
-            with open("/storage/emulated/0/PyServe/error_log.txt", "a", encoding="utf-8") as f:
-                f.write("\n" + "=" * 40 + "\n")
-                f.write(f"PLUGIN: {folder}\n")
-                f.write(f"FILE: {main_file}\n")
-                f.write(f"ERROR: {str(e)}\n")
+            try:
+                with open("/storage/emulated/0/PyServe/error_log.txt", "a", encoding="utf-8") as f:
+                    f.write("\n" + "=" * 40 + "\n")
+                    f.write(f"PLUGIN: {folder}\n")
+                    f.write(f"FILE: {main_file}\n")
+                    f.write(f"ERROR: {str(e)}\n")
+            except:
+                pass
 
 
 # -----------------------
@@ -64,7 +77,17 @@ def load_plugins(app):
         print("❌ Plugin directory not found")
         return
 
-    for folder in os.listdir(PLUGIN_DIR):
+    # 🔥 OŠETŘENÍ PERMISSION
+    try:
+        folders = os.listdir(PLUGIN_DIR)
+    except PermissionError:
+        print("❌ No permission to access plugin directory")
+        return
+    except Exception as e:
+        print(f"❌ PLUGIN ACCESS ERROR: {e}")
+        return
+
+    for folder in folders:
         plugin_path = os.path.join(PLUGIN_DIR, folder)
 
         if not os.path.isdir(plugin_path):
@@ -100,8 +123,11 @@ def load_plugins(app):
             print(traceback.format_exc())
 
             # log i do souboru
-            with open("/storage/emulated/0/PyServe/error_log.txt", "a", encoding="utf-8") as f:
-                f.write("\n" + "=" * 40 + "\n")
-                f.write(f"PLUGIN LOAD ERROR: {folder}\n")
-                f.write(f"ERROR: {str(e)}\n")
-                f.write(traceback.format_exc())
+            try:
+                with open("/storage/emulated/0/PyServe/error_log.txt", "a", encoding="utf-8") as f:
+                    f.write("\n" + "=" * 40 + "\n")
+                    f.write(f"PLUGIN LOAD ERROR: {folder}\n")
+                    f.write(f"ERROR: {str(e)}\n")
+                    f.write(traceback.format_exc())
+            except:
+                pass
