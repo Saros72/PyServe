@@ -18,13 +18,14 @@ requirements = python3,kivy,bottle,requests,kivymd,pillow,pyjnius,plyer,bs4,webs
 services = server:service.py:foreground:sticky
 
 # --- UI ---
+# portrait or landscape
 orientation = portrait
 fullscreen = 0
 
 # --- ANDROID SDK ---
 android.api = 33
-android.minapi = 21
-android.target = 33
+android.minapi = 22
+android.target = 28
 
 
 android.permissions = INTERNET,POST_NOTIFICATIONS,FOREGROUND_SERVICE,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
@@ -35,7 +36,9 @@ android.archs = arm64-v8a,armeabi-v7a
 
 # --- ICON ---
 icon.filename = assets/icon.png
-presplash.filename = assets/icon.png
+# --- SPLASH ---
+# splash.png or splash_tv.png
+presplash.filename = assets/splash.png
 android.presplash_color = #FFFFFF
 
 # --- BOOTSTRAP ---
