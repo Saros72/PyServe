@@ -157,7 +157,7 @@ class App(MDApp):
 
     # 🔥 KLÍČOVÉ PRO XIAOMI
     def _on_keyboard_up(self, window, key, scancode):
-        if key in (13, 271, 23):
+        if key in (13, 271, 23, 1073741943):
             self._trigger_button()
             return True
         return False
