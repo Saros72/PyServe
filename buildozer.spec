@@ -23,7 +23,7 @@ orientation = portrait
 fullscreen = 0
 
 # --- ANDROID SDK ---
-android.api = 33
+android.api = 28
 android.minapi = 22
 android.target = 28
 
