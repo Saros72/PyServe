@@ -10,6 +10,7 @@ from plugin_loader import check_plugins
 import os
 import requests
 import webbrowser
+import socket
 
 # -----------------------
 # ANDROID DETECTION
@@ -33,10 +34,30 @@ ERROR_LOG_FILE = os.path.join(BASE_DIR, "error_log.txt")
 # -----------------------
 def is_server_running():
     try:
-        requests.get("http://127.0.0.1:9666", timeout=1)
+        requests.get("http://127.0.0.1:9666", timeout=0.5)
         return True
     except:
         return False
+
+# -----------------------
+# 🔥 GET IP ADRESS
+# -----------------------
+def get_ip():
+    try:
+        hostname = socket.gethostname()
+        ip = socket.gethostbyname(hostname)
+        if ip.startswith("127."):
+            raise Exception("fallback")
+        return ip
+    except:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(('8.8.8.8', 1))
+            ip = s.getsockname()[0]
+            s.close()
+            return ip
+        except:
+            return '127.0.0.1'
 
 
 class App(MDApp):
@@ -51,7 +72,7 @@ class App(MDApp):
         self.log_buffer = []
         self.log_queue = []
 
-        Clock.schedule_interval(self._process_log_queue, 0.1)
+        Clock.schedule_interval(self._process_log_queue, 0.2)
 
         # -----------------------
         # TV / MOBILE KV SWITCH
@@ -77,15 +98,16 @@ class App(MDApp):
 
         root = Builder.load_file(kv_file)
 
-        # 👉 OVLÁDÁNÍ TV / GAMEPAD
+        # 👉 TV / GAMEPAD
         Window.bind(on_key_down=self._on_keyboard)
-        Window.bind(on_key_up=self._on_keyboard_up)   # 🔥 přidáno
+        Window.bind(on_key_up=self._on_keyboard_up)
         Window.bind(on_joy_button_down=self._on_joy)
 
         return root
 
     def on_start(self):
-        self.url_display = "http://localhost:9666"
+
+        self.url_display = f"http://{get_ip()}:9666" if self.is_tv else "http://127.0.0.1:9666"
         self.add_log("=== APP START ===")
 
         # 🔥 ORIENTATION LOCK
@@ -123,15 +145,12 @@ class App(MDApp):
             try:
                 btn = self.root.ids.start_button
 
-                # uložíme původní barvu
                 normal_color = btn.md_bg_color[:]
 
-                # efekt "stisku prstem"
                 btn.md_bg_color = [
                     max(0, c * 0.65) for c in normal_color[:3]
                 ] + [1]
 
-                # spustí stejný efekt jako fyzický tap
                 def release(dt):
                     btn.trigger_action(duration=0.1)
 
@@ -144,18 +163,16 @@ class App(MDApp):
                 return
 
             except Exception as e:
-                print(f"Chyba triggeru: {e}")
+                print(f"Error trigger: {e}")
 
         # fallback
         self.toggle_server()
 
     def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
-        # jen blokujeme (aby nebyl double trigger)
         if key in (13, 271, 23):
             return True
         return False
 
-    # 🔥 KLÍČOVÉ PRO XIAOMI
     def _on_keyboard_up(self, window, key, scancode):
         if key in (13, 271, 23, 1073741943):
             self._trigger_button()
@@ -179,7 +196,8 @@ class App(MDApp):
     # 📜 LOG SYSTEM
     # -----------------------
     def add_log(self, msg):
-        self.log_queue.append(msg)
+        if len(self.log_queue) < 500:
+            self.log_queue.append(msg)
 
     def _process_log_queue(self, dt):
         if not self.log_queue:
@@ -189,9 +207,22 @@ class App(MDApp):
         self.log_buffer.append(msg)
 
         try:
-            self.root.ids.log_label.text = "\n".join(self.log_buffer[-200:])
-        except:
-            pass
+            log_label = self.root.ids.log_label
+            scroll_view = log_label.parent
+
+            log_label.text = "\n".join(self.log_buffer[-300:])
+
+            def do_scroll(dt2):
+                if log_label.height > scroll_view.height:
+                    scroll_view.scroll_y = 0
+                else:
+                    scroll_view.scroll_y = 1
+            
+            Clock.schedule_once(do_scroll, 0)
+
+        except Exception as e:
+            print(f"Log scroll error: {e}")
+
 
     def add_error(self, msg, ui=True):
         if ui:
@@ -248,17 +279,21 @@ class App(MDApp):
     # -----------------------
     def toggle_server(self):
         if not self.running:
-            check_plugins(self.add_log, self.add_error)
+            Clock.schedule_once(lambda dt: check_plugins(self.add_log, self.add_error), 0)
 
             self.button_text = "STOP"
             self.add_log("Server START")
 
-            try:
-                service = autoclass('org.pyserve.pyserve.ServiceServer')
-                mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
-                service.start(mActivity, 'small_icon', 'PyServe', 'Server running...', '')
-            except Exception as e:
-                self.add_error(f"SERVICE START ERROR: {e}")
+            if ANDROID:
+                try:
+                    service = autoclass('org.pyserve.pyserve.ServiceServer')
+                    mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
+                    service.start(mActivity, 'small_icon', 'PyServe', 'Server running...', '')
+                except Exception as e:
+                    self.add_error(f"SERVICE START ERROR: {e}")
+                    return
+            else:
+                self.add_log("Service only on Android")
                 return
 
             def check(dt):
@@ -277,12 +312,15 @@ class App(MDApp):
             self.running = False
             self.add_log("Server STOP")
 
-            try:
-                service = autoclass('org.pyserve.pyserve.ServiceServer')
-                mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
-                service.stop(mActivity)
-            except Exception as e:
-                self.add_error(f"SERVICE STOP ERROR: {e}")
+            if ANDROID:
+                try:
+                    service = autoclass('org.pyserve.pyserve.ServiceServer')
+                    mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
+                    service.stop(mActivity)
+                except Exception as e:
+                    self.add_error(f"SERVICE STOP ERROR: {e}")
+            else:
+                self.add_log("Service only on Android")
 
     # -----------------------
     # 🌐 OPEN WEB

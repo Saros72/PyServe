@@ -4,7 +4,7 @@ title = PyServe
 package.name = pyserve
 package.domain = org.pyserve
 
-version = 1.0
+version = 0.1
 
 # --- SOURCE ---
 source.dir = .
@@ -19,17 +19,16 @@ services = server:service.py:foreground:sticky
 
 # --- UI ---
 # portrait or landscape
-orientation = portrait
-fullscreen = 0
+orientation = landscape
+fullscreen = 1
 
 # --- ANDROID SDK ---
-android.api = 28
-android.minapi = 22
-android.target = 28
+android.api = 31
+android.minapi = 21
+android.target = 31
 
-
-android.permissions = INTERNET,POST_NOTIFICATIONS,FOREGROUND_SERVICE,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
-
+# --- ANDROID PERMISSION ---
+android.permissions = INTERNET,POST_NOTIFICATIONS,FOREGROUND_SERVICE,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,MANAGE_EXTERNAL_STORAGE
 
 # --- ARCH ---
 android.archs = arm64-v8a,armeabi-v7a
