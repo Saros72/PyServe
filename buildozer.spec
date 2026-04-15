@@ -40,8 +40,6 @@ icon.filename = assets/icon.png
 presplash.filename = assets/splash.png
 android.presplash_color = #FFFFFF
 
-android.manifest_template = android/AndroidManifest.tmpl.xml
-
 # --- BOOTSTRAP ---
 p4a.bootstrap = sdl2
 
