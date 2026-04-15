@@ -78,6 +78,7 @@ MDScreen:
                             padding: "10dp"
 
                             ScrollView:
+                                id: log_scroll
                                 MDLabel:
                                     id: log_label
                                     text: ""
@@ -122,23 +123,23 @@ MDScreen:
                     MDNavigationDrawerDivider:
 
                     MDNavigationDrawerItem:
-                        icon: "email"
-                        text: "E-mail"
-                        on_release:
-                            app.root.ids.nav_drawer.set_state("close")
-                            app.send_email()
-
-                    MDNavigationDrawerItem:
                         icon: "github"
                         text: "GitHub"
                         on_release:
                             app.root.ids.nav_drawer.set_state("close")
                             app.open_github()
 
+                    MDNavigationDrawerItem:
+                        icon: "email"
+                        text: "E-mail"
+                        on_release:
+                            app.root.ids.nav_drawer.set_state("close")
+                            app.send_email()
+
                 Widget:
 
                 MDLabel:
-                    text: "© 2026 PyServe v1.0.0\nCreated by Sároš"
+                    text: "© 2026 PyServe v0.1.0\nCreated by Sároš"
                     halign: "center"
                     size_hint_y: None
                     height: self.texture_size[1] + dp(20)
