@@ -4,7 +4,7 @@ title = PyServe
 package.name = pyserve
 package.domain = org.pyserve
 
-version = 0.1
+version = 0.1.0
 
 # --- SOURCE ---
 source.dir = .
