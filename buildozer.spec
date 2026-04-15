@@ -19,8 +19,8 @@ services = server:service.py:foreground:sticky
 
 # --- UI ---
 # portrait or landscape
-orientation = landscape
-fullscreen = 1
+orientation = portrait
+fullscreen = 0
 
 # --- ANDROID SDK ---
 android.api = 31

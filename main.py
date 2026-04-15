@@ -282,7 +282,7 @@ class App(MDApp):
             Clock.schedule_once(lambda dt: check_plugins(self.add_log, self.add_error), 0)
 
             self.button_text = "STOP"
-            self.add_log("Server START")
+            self.add_log("\nServer START")
 
             if ANDROID:
                 try:
