@@ -39,7 +39,7 @@ icon.filename = assets/icon.png
 # --- SPLASH ---
 # splash.png or splash_tv.png
 #presplash.filename = assets/splash.png
-android.presplash_screen = splash
+android.presplash_screen = presplash
 android.add_resources = %(source.dir)s/res
 android.presplash_color = #FFFFFF
 
