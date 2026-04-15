@@ -35,9 +35,12 @@ android.archs = arm64-v8a,armeabi-v7a
 
 # --- ICON ---
 icon.filename = assets/icon.png
+
 # --- SPLASH ---
 # splash.png or splash_tv.png
-presplash.filename = assets/splash.png
+#presplash.filename = assets/splash.png
+android.presplash_screen = presplash
+android.add_resources = %(source.dir)s/res
 android.presplash_color = #FFFFFF
 
 # --- BOOTSTRAP ---
