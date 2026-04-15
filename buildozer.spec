@@ -19,7 +19,7 @@ services = server:service.py:foreground:sticky
 
 # --- UI ---
 # portrait or landscape
-orientation = portrait
+orientation = landscape
 fullscreen = 0
 
 # --- ANDROID SDK ---
@@ -35,9 +35,12 @@ android.archs = arm64-v8a,armeabi-v7a
 
 # --- ICON ---
 icon.filename = assets/icon.png
+
 # --- SPLASH ---
 # splash.png or splash_tv.png
-presplash.filename = assets/splash.png
+#presplash.filename = assets/splash.png
+android.presplash_screen = splash
+android.add_resources = %(source.dir)s/res
 android.presplash_color = #FFFFFF
 
 # --- BOOTSTRAP ---
