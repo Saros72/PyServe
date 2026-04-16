@@ -28,7 +28,6 @@ BASE_DIR = "/storage/emulated/0/PyServe"
 PLUGIN_DIR = os.path.join(BASE_DIR, "demo")
 ERROR_LOG_FILE = os.path.join(BASE_DIR, "error_log.txt")
 
-
 # -----------------------
 # 🔥 SERVER CHECK
 # -----------------------
@@ -38,7 +37,6 @@ def is_server_running():
         return True
     except:
         return False
-
 
 # -----------------------
 # 🔥 GET IP ADRESS
@@ -69,6 +67,8 @@ class App(MDApp):
 
     running = BooleanProperty(False)
     ready = BooleanProperty(False)
+
+    LOG_SCROLL_STEP = 0.06
 
     def build(self):
         self.log_buffer = []
@@ -115,13 +115,11 @@ class App(MDApp):
                     activity.setRequestedOrientation(0)
                 else:
                     activity.setRequestedOrientation(1)
-
             except Exception as e:
                 print(f"Orientation error: {e}")
 
         self.update_system_bars()
 
-        # 🔥 JEDNOTNÁ KONTROLA
         self.check_and_prepare()
 
         if is_server_running():
@@ -140,7 +138,6 @@ class App(MDApp):
         try:
             self.setup_plugin_folder()
 
-            # 🔥 PERMISSION TEST
             test_file = os.path.join(BASE_DIR, ".perm_test")
 
             with open(test_file, "w") as f:
@@ -186,13 +183,42 @@ class App(MDApp):
 
         self.toggle_server()
 
+    # -----------------------
+    # BACK + OK + SCROLL + JOY
+    # -----------------------
     def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
-        return key in (13, 271, 23)
+
+        # BACK → systém
+        if key in (4, 27, 1001):
+            return False
+
+        # OK / ENTER
+        if key in (13, 271, 23, 66):
+            return True
+
+        return False
 
     def _on_keyboard_up(self, window, key, scancode):
+
+        # BACK → systém
+        if key in (4, 27, 1001):
+            return False
+
+        # OK → akce
         if key in (13, 271, 23, 1073741943):
             self._trigger_button()
             return True
+
+        # UP → scroll log nahoru
+        if key == 19:
+            self.scroll_log(self.LOG_SCROLL_STEP)
+            return True
+
+        # DOWN → scroll log dolů
+        if key == 20:
+            self.scroll_log(-self.LOG_SCROLL_STEP)
+            return True
+
         return False
 
     def _on_joy(self, window, stick_id, button_id):
@@ -200,6 +226,18 @@ class App(MDApp):
             self._trigger_button()
             return True
         return False
+
+    # -----------------------
+    # 🔥 SCROLL LOG
+    # -----------------------
+    def scroll_log(self, delta):
+        try:
+            log_label = self.root.ids.log_label
+            scroll_view = log_label.parent
+
+            scroll_view.scroll_y = max(0.0, min(1.0, scroll_view.scroll_y + delta))
+        except Exception as e:
+            print(f"Scroll error: {e}")
 
     # -----------------------
     # 🎨 UI
@@ -291,7 +329,6 @@ class App(MDApp):
     def toggle_server(self):
         if not self.running:
 
-            # 🔥 vždy znovu ověřit (NE ready!)
             if not self.check_and_prepare():
                 return
 
