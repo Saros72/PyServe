@@ -17,17 +17,16 @@ def check_plugins(log_func, error_func):
     log_func("=== PLUGIN CHECK ===")
 
     if not os.path.exists(PLUGIN_DIR):
-        error_func("Plugin directory not found")
+        log_func("Plugin directory not found")
         return
 
-    # 🔥 OŠETŘENÍ PERMISSION
     try:
         folders = os.listdir(PLUGIN_DIR)
     except PermissionError:
-        error_func("No permission to access plugin directory")
+        log_func("No permission to access plugin directory")
         return
     except Exception as e:
-        error_func(f"PLUGIN ACCESS ERROR: {e}")
+        log_func(f"PLUGIN ACCESS ERROR: {e}")
         return
 
     for folder in folders:
@@ -53,15 +52,23 @@ def check_plugins(log_func, error_func):
             log_func(f"{folder}: OK")
 
         except Exception as e:
-            # UI jen krátce
+            # UI krátké
             error_func(f"{folder}: ERROR")
 
-            # FILE log jen čisté info
+            # 🔥 vezmeme jen relevantní část tracebacku
+            tb = traceback.extract_tb(e.__traceback__)
+
+            file_info = ""
+            if tb:
+                last = tb[-1]
+                file_info = f'File "{last.filename}", line {last.lineno}, in {last.name}'
+
+            # FILE log čistý
             try:
                 with open("/storage/emulated/0/PyServe/error_log.txt", "a", encoding="utf-8") as f:
                     f.write("\n" + "=" * 40 + "\n")
                     f.write(f"PLUGIN: {folder}\n")
-                    f.write(f"FILE: {main_file}\n")
+                    f.write(f"{file_info}\n")
                     f.write(f"ERROR: {str(e)}\n")
             except:
                 pass

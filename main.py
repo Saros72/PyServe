@@ -232,6 +232,7 @@ class App(MDApp):
             with open(ERROR_LOG_FILE, "a", encoding="utf-8") as f:
                 f.write(msg + "\n")
         except:
+            self.add_log("No permission to access plugin directory")
             pass
 
     # -----------------------
@@ -305,7 +306,7 @@ class App(MDApp):
                     self.button_text = "START"
                     self.add_error("Server failed")
 
-            Clock.schedule_once(check, 1.5)
+            Clock.schedule_once(check, 0.5)
 
         else:
             self.button_text = "START"
