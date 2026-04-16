@@ -67,7 +67,7 @@ class App(MDApp):
     button_text = StringProperty("START")
 
     running = BooleanProperty(False)
-    ready = BooleanProperty(False)  # 🔥 NEW
+    ready = BooleanProperty(False)
 
     def build(self):
         self.log_buffer = []
@@ -120,16 +120,27 @@ class App(MDApp):
 
         self.update_system_bars()
 
-        # 🔥 INIT SETUP CHECK
+        # 🔥 INIT SETUP CHECK + PERMISSION TEST
         try:
             self.setup_plugin_folder()
 
-            if os.path.exists(BASE_DIR) and os.path.exists(PLUGIN_DIR):
+            # 🔥 TEST ZÁPISU (reálný permission check)
+            test_file = os.path.join(BASE_DIR, ".perm_test")
+
+            try:
+                with open(test_file, "w") as f:
+                    f.write("test")
+                os.remove(test_file)
+
+                # 🔥 TEST ČTENÍ
+                os.listdir(BASE_DIR)
+
                 self.ready = True
                 self.add_log("Setup OK")
-            else:
+
+            except Exception as e:
                 self.ready = False
-                self.add_error("Setup FAILED")
+                self.add_error(f"Storage access ERROR: {e}")
 
         except Exception as e:
             self.ready = False
@@ -238,7 +249,7 @@ class App(MDApp):
     # -----------------------
     def setup_plugin_folder(self):
         try:
-            self.add_log("=== SETUP START ===")
+            self.add_log("\n=== SETUP START ===")
 
             if not os.path.exists(BASE_DIR):
                 os.makedirs(BASE_DIR)
@@ -279,7 +290,6 @@ class App(MDApp):
     def toggle_server(self):
         if not self.running:
 
-            # 🔥 BLOKACE
             if not self.ready:
                 self.add_error("App not ready - storage access required")
                 return
@@ -287,20 +297,24 @@ class App(MDApp):
             try:
                 self.setup_plugin_folder()
 
-                if not os.path.exists(BASE_DIR) or not os.path.exists(PLUGIN_DIR):
-                    self.add_error("Setup validation failed")
-                    self.ready = False
-                    return
+                # 🔥 znovu test permission
+                test_file = os.path.join(BASE_DIR, ".perm_test")
+
+                with open(test_file, "w") as f:
+                    f.write("test")
+                os.remove(test_file)
+
+                os.listdir(BASE_DIR)
 
             except Exception as e:
-                self.add_error(f"SETUP CHECK ERROR: {e}")
+                self.add_error(f"SETUP / PERMISSION ERROR: {e}")
                 self.ready = False
                 return
 
             Clock.schedule_once(lambda dt: check_plugins(self.add_log, self.add_error), 0)
 
             self.button_text = "STOP"
-            self.add_log("\nServer START")
+            self.add_log("Server START")
 
             if ANDROID:
                 try:
@@ -323,7 +337,7 @@ class App(MDApp):
                     self.button_text = "START"
                     self.add_error("Server failed")
 
-            Clock.schedule_once(check, 1.5)
+            Clock.schedule_once(check, 0.5)
 
         else:
             self.button_text = "START"
