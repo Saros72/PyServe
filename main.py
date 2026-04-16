@@ -67,6 +67,7 @@ class App(MDApp):
     button_text = StringProperty("START")
 
     running = BooleanProperty(False)
+    ready = BooleanProperty(False)  # 🔥 NEW
 
     def build(self):
         self.log_buffer = []
@@ -74,9 +75,6 @@ class App(MDApp):
 
         Clock.schedule_interval(self._process_log_queue, 0.2)
 
-        # -----------------------
-        # TV / MOBILE KV SWITCH
-        # -----------------------
         self.is_tv = False
 
         try:
@@ -88,17 +86,14 @@ class App(MDApp):
                 context = PythonActivity.mActivity
                 ui_mode = context.getSystemService(Context.UI_MODE_SERVICE)
 
-                # TV mode = 4
                 if ui_mode.getCurrentModeType() == 4:
                     self.is_tv = True
         except:
             self.is_tv = False
 
         kv_file = "ui/layout_tv.kv" if self.is_tv else "ui/layout.kv"
-
         root = Builder.load_file(kv_file)
 
-        # 👉 TV / GAMEPAD
         Window.bind(on_key_down=self._on_keyboard)
         Window.bind(on_key_up=self._on_keyboard_up)
         Window.bind(on_joy_button_down=self._on_joy)
@@ -110,22 +105,35 @@ class App(MDApp):
         self.url_display = f"http://{get_ip()}:9666" if self.is_tv else "http://127.0.0.1:9666"
         self.add_log("=== APP START ===")
 
-        # 🔥 ORIENTATION LOCK
         if ANDROID:
             try:
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 activity = PythonActivity.mActivity
 
                 if self.is_tv:
-                    activity.setRequestedOrientation(0)  # landscape
+                    activity.setRequestedOrientation(0)
                 else:
-                    activity.setRequestedOrientation(1)  # portrait
+                    activity.setRequestedOrientation(1)
 
             except Exception as e:
                 print(f"Orientation error: {e}")
 
         self.update_system_bars()
-        self.setup_plugin_folder()
+
+        # 🔥 INIT SETUP CHECK
+        try:
+            self.setup_plugin_folder()
+
+            if os.path.exists(BASE_DIR) and os.path.exists(PLUGIN_DIR):
+                self.ready = True
+                self.add_log("Setup OK")
+            else:
+                self.ready = False
+                self.add_error("Setup FAILED")
+
+        except Exception as e:
+            self.ready = False
+            self.add_error(f"Setup error: {e}")
 
         if is_server_running():
             self.running = True
@@ -144,12 +152,9 @@ class App(MDApp):
         if hasattr(self, "root") and self.root:
             try:
                 btn = self.root.ids.start_button
-
                 normal_color = btn.md_bg_color[:]
 
-                btn.md_bg_color = [
-                    max(0, c * 0.65) for c in normal_color[:3]
-                ] + [1]
+                btn.md_bg_color = [max(0, c * 0.65) for c in normal_color[:3]] + [1]
 
                 def release(dt):
                     btn.trigger_action(duration=0.1)
@@ -165,7 +170,6 @@ class App(MDApp):
             except Exception as e:
                 print(f"Error trigger: {e}")
 
-        # fallback
         self.toggle_server()
 
     def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
@@ -180,7 +184,6 @@ class App(MDApp):
         return False
 
     def _on_joy(self, window, stick_id, button_id):
-        # OK Gamepad
         if button_id in (0, 96, 23):
             self._trigger_button()
             return True
@@ -213,16 +216,12 @@ class App(MDApp):
             log_label.text = "\n".join(self.log_buffer[-300:])
 
             def do_scroll(dt2):
-                if log_label.height > scroll_view.height:
-                    scroll_view.scroll_y = 0
-                else:
-                    scroll_view.scroll_y = 1
-            
+                scroll_view.scroll_y = 0 if log_label.height > scroll_view.height else 1
+
             Clock.schedule_once(do_scroll, 0)
 
         except Exception as e:
             print(f"Log scroll error: {e}")
-
 
     def add_error(self, msg, ui=True):
         if ui:
@@ -232,7 +231,6 @@ class App(MDApp):
             with open(ERROR_LOG_FILE, "a", encoding="utf-8") as f:
                 f.write(msg + "\n")
         except:
-            self.add_log("No permission to access plugin directory")
             pass
 
     # -----------------------
@@ -280,6 +278,25 @@ class App(MDApp):
     # -----------------------
     def toggle_server(self):
         if not self.running:
+
+            # 🔥 BLOKACE
+            if not self.ready:
+                self.add_error("App not ready - storage access required")
+                return
+
+            try:
+                self.setup_plugin_folder()
+
+                if not os.path.exists(BASE_DIR) or not os.path.exists(PLUGIN_DIR):
+                    self.add_error("Setup validation failed")
+                    self.ready = False
+                    return
+
+            except Exception as e:
+                self.add_error(f"SETUP CHECK ERROR: {e}")
+                self.ready = False
+                return
+
             Clock.schedule_once(lambda dt: check_plugins(self.add_log, self.add_error), 0)
 
             self.button_text = "STOP"
@@ -306,7 +323,7 @@ class App(MDApp):
                     self.button_text = "START"
                     self.add_error("Server failed")
 
-            Clock.schedule_once(check, 0.5)
+            Clock.schedule_once(check, 1.5)
 
         else:
             self.button_text = "START"
