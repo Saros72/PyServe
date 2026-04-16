@@ -16,15 +16,8 @@ def check_plugins(log_func, error_func):
 
     log_func("=== PLUGIN CHECK ===")
 
-    if not os.path.exists(PLUGIN_DIR):
-        log_func("Plugin directory not found")
-        return
-
     try:
         folders = os.listdir(PLUGIN_DIR)
-    except PermissionError:
-        log_func("No permission to access plugin directory")
-        return
     except Exception as e:
         log_func(f"PLUGIN ACCESS ERROR: {e}")
         return
@@ -55,7 +48,6 @@ def check_plugins(log_func, error_func):
             # UI krátké
             error_func(f"{folder}: ERROR")
 
-            # 🔥 vezmeme jen relevantní část tracebacku
             tb = traceback.extract_tb(e.__traceback__)
 
             file_info = ""
@@ -63,7 +55,6 @@ def check_plugins(log_func, error_func):
                 last = tb[-1]
                 file_info = f'File "{last.filename}", line {last.lineno}, in {last.name}'
 
-            # FILE log čistý
             try:
                 with open("/storage/emulated/0/PyServe/error_log.txt", "a", encoding="utf-8") as f:
                     f.write("\n" + "=" * 40 + "\n")
@@ -80,18 +71,10 @@ def check_plugins(log_func, error_func):
 def load_plugins(app):
     print(f"🔌 Loading plugins from: {PLUGIN_DIR}")
 
-    if not os.path.exists(PLUGIN_DIR):
-        print("❌ Plugin directory not found")
-        return
-
-    # 🔥 OŠETŘENÍ PERMISSION
     try:
         folders = os.listdir(PLUGIN_DIR)
-    except PermissionError:
-        print("❌ No permission to access plugin directory")
-        return
     except Exception as e:
-        print(f"❌ PLUGIN ACCESS ERROR: {e}")
+        print(f"❌ PLUGIN LOAD ERROR: {e}")
         return
 
     for folder in folders:
@@ -100,8 +83,8 @@ def load_plugins(app):
         if not os.path.isdir(plugin_path):
             continue
 
+        # 🔥 entry file resolve
         main_file = os.path.join(plugin_path, "main.py")
-
         if not os.path.exists(main_file):
             main_file = os.path.join(plugin_path, "default.py")
 
@@ -118,6 +101,7 @@ def load_plugins(app):
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
+            # 🔥 plugin init
             if hasattr(module, "register"):
                 module.register(app)
                 loaded_plugins.add(folder)
@@ -129,7 +113,6 @@ def load_plugins(app):
             print(f"❌ Plugin error: {folder}")
             print(traceback.format_exc())
 
-            # log i do souboru
             try:
                 with open("/storage/emulated/0/PyServe/error_log.txt", "a", encoding="utf-8") as f:
                     f.write("\n" + "=" * 40 + "\n")

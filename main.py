@@ -39,6 +39,7 @@ def is_server_running():
     except:
         return False
 
+
 # -----------------------
 # 🔥 GET IP ADRESS
 # -----------------------
@@ -120,31 +121,8 @@ class App(MDApp):
 
         self.update_system_bars()
 
-        # 🔥 INIT SETUP CHECK + PERMISSION TEST
-        try:
-            self.setup_plugin_folder()
-
-            # 🔥 TEST ZÁPISU (reálný permission check)
-            test_file = os.path.join(BASE_DIR, ".perm_test")
-
-            try:
-                with open(test_file, "w") as f:
-                    f.write("test")
-                os.remove(test_file)
-
-                # 🔥 TEST ČTENÍ
-                os.listdir(BASE_DIR)
-
-                self.ready = True
-                self.add_log("Setup OK")
-
-            except Exception as e:
-                self.ready = False
-                self.add_error(f"Storage access ERROR: {e}")
-
-        except Exception as e:
-            self.ready = False
-            self.add_error(f"Setup error: {e}")
+        # 🔥 JEDNOTNÁ KONTROLA
+        self.check_and_prepare()
 
         if is_server_running():
             self.running = True
@@ -154,6 +132,31 @@ class App(MDApp):
             self.running = False
             self.button_text = "START"
             self.add_log("Server not running")
+
+    # -----------------------
+    # 🔥 KLÍČOVÁ FUNKCE
+    # -----------------------
+    def check_and_prepare(self):
+        try:
+            self.setup_plugin_folder()
+
+            # 🔥 PERMISSION TEST
+            test_file = os.path.join(BASE_DIR, ".perm_test")
+
+            with open(test_file, "w") as f:
+                f.write("test")
+            os.remove(test_file)
+
+            os.listdir(BASE_DIR)
+
+            self.ready = True
+            self.add_log("Setup OK")
+            return True
+
+        except Exception as e:
+            self.ready = False
+            self.add_error(f"Storage access ERROR: {e}")
+            return False
 
     # -----------------------
     # 🎮 TV / REMOTE CONTROL
@@ -184,9 +187,7 @@ class App(MDApp):
         self.toggle_server()
 
     def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
-        if key in (13, 271, 23):
-            return True
-        return False
+        return key in (13, 271, 23)
 
     def _on_keyboard_up(self, window, key, scancode):
         if key in (13, 271, 23, 1073741943):
@@ -290,31 +291,14 @@ class App(MDApp):
     def toggle_server(self):
         if not self.running:
 
-            if not self.ready:
-                self.add_error("App not ready - storage access required")
-                return
-
-            try:
-                self.setup_plugin_folder()
-
-                # 🔥 znovu test permission
-                test_file = os.path.join(BASE_DIR, ".perm_test")
-
-                with open(test_file, "w") as f:
-                    f.write("test")
-                os.remove(test_file)
-
-                os.listdir(BASE_DIR)
-
-            except Exception as e:
-                self.add_error(f"SETUP / PERMISSION ERROR: {e}")
-                self.ready = False
+            # 🔥 vždy znovu ověřit (NE ready!)
+            if not self.check_and_prepare():
                 return
 
             Clock.schedule_once(lambda dt: check_plugins(self.add_log, self.add_error), 0)
 
             self.button_text = "STOP"
-            self.add_log("Server START")
+            self.add_log("\nServer START")
 
             if ANDROID:
                 try:
