@@ -188,7 +188,7 @@ class App(MDApp):
     # -----------------------
     def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
 
-        # BACK → systém
+        # BACK → pustit systému
         if key in (4, 27, 1001):
             return False
 
@@ -198,9 +198,10 @@ class App(MDApp):
 
         return False
 
+
     def _on_keyboard_up(self, window, key, scancode):
 
-        # BACK → systém
+        # BACK → nic nedělat
         if key in (4, 27, 1001):
             return False
 
@@ -209,35 +210,41 @@ class App(MDApp):
             self._trigger_button()
             return True
 
-        # UP → scroll log nahoru
-        if key == 19:
-            self.scroll_log(self.LOG_SCROLL_STEP)
-            return True
-
-        # DOWN → scroll log dolů
-        if key == 20:
-            self.scroll_log(-self.LOG_SCROLL_STEP)
-            return True
-
         return False
 
+
     def _on_joy(self, window, stick_id, button_id):
-        if button_id in (0, 96, 23):
+
+        # 🔙 BACK → pustit systému
+        if button_id == 4:
+            return False
+
+        # ✅ OK
+        if button_id == 0:
             self._trigger_button()
             return True
+
+        # ⬆️ UP
+        if button_id == 11:
+            self._scroll_log(0.1)
+            return True
+
+        # ⬇️ DOWN
+        if button_id == 12:
+            self._scroll_log(-0.1)
+            return True
+
         return False
 
     # -----------------------
     # 🔥 SCROLL LOG
     # -----------------------
-    def scroll_log(self, delta):
+    def _scroll_log(self, amount):
         try:
-            log_label = self.root.ids.log_label
-            scroll_view = log_label.parent
-
-            scroll_view.scroll_y = max(0.0, min(1.0, scroll_view.scroll_y + delta))
-        except Exception as e:
-            print(f"Scroll error: {e}")
+            scroll_view = self.root.ids.log_label.parent
+            scroll_view.scroll_y = min(1, max(0, scroll_view.scroll_y + amount))
+        except:
+            pass
 
     # -----------------------
     # 🎨 UI
@@ -331,11 +338,11 @@ class App(MDApp):
 
             if not self.check_and_prepare():
                 return
+            self.button_text = "STOP"
+            self.add_log("\nServer START")
 
             Clock.schedule_once(lambda dt: check_plugins(self.add_log, self.add_error), 0)
 
-            self.button_text = "STOP"
-            self.add_log("\nServer START")
 
             if ANDROID:
                 try:
@@ -358,7 +365,7 @@ class App(MDApp):
                     self.button_text = "START"
                     self.add_error("Server failed")
 
-            Clock.schedule_once(check, 0.5)
+            Clock.schedule_once(check, 1.5)
 
         else:
             self.button_text = "START"
@@ -394,23 +401,30 @@ class App(MDApp):
     def open_github(self):
         try:
             webbrowser.open("https://github.com/Saros72/PyServe")
-            self.add_log("Opening GitHub/PyServe")
+            self.add_log("\n => Opening GitHub/PyServe")
         except Exception as e:
             self.add_error(f"GITHUB ERROR: {e}")
 
     def open_plugins(self):
         try:
             webbrowser.open("https://github.com/")
-            self.add_log("Opening GitHub/Plugins")
+            self.add_log("\n => Opening GitHub/Plugins")
         except Exception as e:
             self.add_error(f"GITHUB ERROR: {e}")
 
     def send_email(self):
         try:
             webbrowser.open("mailto:ss72@seznam.cz")
-            self.add_log("Opening email client")
+            self.add_log("\n => Opening email client")
         except Exception as e:
             self.add_error(f"EMAIL ERROR: {e}")
+
+    def open_paypal(self):
+        try:
+            webbrowser.open("https://paypal.me/petrsarka")
+            self.add_log("\n => Opening PayPal.Me")
+        except Exception as e:
+            self.add_error(f"PAYPAL ERROR: {e}")
 
 
 if __name__ == "__main__":
