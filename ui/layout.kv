@@ -136,6 +136,13 @@ MDScreen:
                             app.root.ids.nav_drawer.set_state("close")
                             app.send_email()
 
+                    MDNavigationDrawerItem:
+                        icon: "heart"
+                        text: "Support Project"
+                        on_release:
+                            app.root.ids.nav_drawer.set_state("close")
+                            app.open_paypal()
+
                 Widget:
 
                 MDLabel:
