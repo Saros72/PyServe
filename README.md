@@ -70,8 +70,10 @@ Each plugin must include:
 
 2. Optional function:
 
+```python
 def register(app):
     pass
+```
 
 This function is called when the plugin is loaded.
 
@@ -183,6 +185,7 @@ PyServe/
 
 ## 🧪 Example plugin
 
+```python
 from bottle import route
 
 def register(app):
@@ -190,6 +193,7 @@ def register(app):
     @route("/hello")
     def hello():
         return "Hello from plugin!"
+```
 
 ---
 

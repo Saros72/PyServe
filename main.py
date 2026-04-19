@@ -2,24 +2,20 @@ from kivymd.app import MDApp
 from kivy.lang import Builder
 from kivy.core.window import Window
 from kivymd.utils.set_bars_colors import set_bars_colors
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivy.utils import get_color_from_hex
-from kivy.properties import StringProperty, BooleanProperty
+from kivy.properties import StringProperty, BooleanProperty, ListProperty
 from kivy.clock import Clock
 from plugin_loader import check_plugins
+from jnius import autoclass
+from android.runnable import run_on_ui_thread
+from kivy.storage.jsonstore import JsonStore
 
 import os
 import requests
 import webbrowser
 import socket
-
-# -----------------------
-# ANDROID DETECTION
-# -----------------------
-try:
-    from jnius import autoclass
-    ANDROID = True
-except ImportError:
-    ANDROID = False
 
 Window.fullscreen = False
 
@@ -27,6 +23,42 @@ Window.fullscreen = False
 BASE_DIR = "/storage/emulated/0/PyServe"
 PLUGIN_DIR = os.path.join(BASE_DIR, "demo")
 ERROR_LOG_FILE = os.path.join(BASE_DIR, "error_log.txt")
+kv_file = "ui/layout.kv"
+
+
+Intent = autoclass('android.content.Intent')
+PythonActivity = autoclass('org.kivy.android.PythonActivity')
+String = autoclass('java.lang.String')
+Settings = autoclass('android.provider.Settings')
+Uri = autoclass('android.net.Uri')
+
+
+@run_on_ui_thread
+def open_all_files_permission():
+    activity = PythonActivity.mActivity
+
+    intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+    uri = Uri.parse("package:" + activity.getPackageName())
+
+    intent.setData(uri)
+    activity.startActivity(intent)
+
+
+@run_on_ui_thread
+def share_text(text):
+    activity = PythonActivity.mActivity
+
+    intent = Intent()
+    intent.setAction(Intent.ACTION_SEND)
+    intent.setType("text/plain")
+
+    intent.putExtra(Intent.EXTRA_SUBJECT, String("PyServe"))
+    intent.putExtra(Intent.EXTRA_TEXT, String(text))
+
+    chooser = Intent.createChooser(intent, String("Share PyServe"))
+
+    activity.startActivity(chooser)
+
 
 # -----------------------
 # 🔥 SERVER CHECK
@@ -75,51 +107,19 @@ class App(MDApp):
         self.log_queue = []
 
         Clock.schedule_interval(self._process_log_queue, 0.2)
-
-        self.is_tv = False
-
-        try:
-            if ANDROID:
-                UiModeManager = autoclass('android.app.UiModeManager')
-                Context = autoclass('android.content.Context')
-                PythonActivity = autoclass('org.kivy.android.PythonActivity')
-
-                context = PythonActivity.mActivity
-                ui_mode = context.getSystemService(Context.UI_MODE_SERVICE)
-
-                if ui_mode.getCurrentModeType() == 4:
-                    self.is_tv = True
-        except:
-            self.is_tv = False
-
-        kv_file = "ui/layout_tv.kv" if self.is_tv else "ui/layout.kv"
+        self.store = JsonStore("app_state.json")
         root = Builder.load_file(kv_file)
-
-        Window.bind(on_key_down=self._on_keyboard)
-        Window.bind(on_key_up=self._on_keyboard_up)
-        Window.bind(on_joy_button_down=self._on_joy)
 
         return root
 
     def on_start(self):
 
-        self.url_display = f"http://{get_ip()}:9666" if self.is_tv else "http://127.0.0.1:9666"
+        first_run = False
+
+        self.url_display = "http://127.0.0.1:9666"
         self.add_log("=== APP START ===")
 
-        if ANDROID:
-            try:
-                PythonActivity = autoclass('org.kivy.android.PythonActivity')
-                activity = PythonActivity.mActivity
-
-                if self.is_tv:
-                    activity.setRequestedOrientation(0)
-                else:
-                    activity.setRequestedOrientation(1)
-            except Exception as e:
-                print(f"Orientation error: {e}")
-
         self.update_system_bars()
-
         self.check_and_prepare()
 
         if is_server_running():
@@ -131,8 +131,15 @@ class App(MDApp):
             self.button_text = "START"
             self.add_log("Server not running")
 
+        if self.store.exists("app"):
+            first_run = self.store.get("app").get("first_run", True)
+
+        if first_run:
+            Clock.schedule_once(lambda dt: self.show_permission_dialog(), 0.5)
+            self.store.put("app", first_run=False)
+
     # -----------------------
-    # 🔥 KLÍČOVÁ FUNKCE
+    # 🔥 CHECK PERMISSION
     # -----------------------
     def check_and_prepare(self):
         try:
@@ -155,96 +162,6 @@ class App(MDApp):
             self.add_error(f"Storage access ERROR: {e}")
             return False
 
-    # -----------------------
-    # 🎮 TV / REMOTE CONTROL
-    # -----------------------
-    def _trigger_button(self):
-
-        if hasattr(self, "root") and self.root:
-            try:
-                btn = self.root.ids.start_button
-                normal_color = btn.md_bg_color[:]
-
-                btn.md_bg_color = [max(0, c * 0.65) for c in normal_color[:3]] + [1]
-
-                def release(dt):
-                    btn.trigger_action(duration=0.1)
-
-                    def reset_color(dt2):
-                        btn.md_bg_color = normal_color
-
-                    Clock.schedule_once(reset_color, 0.1)
-
-                Clock.schedule_once(release, 0.05)
-                return
-
-            except Exception as e:
-                print(f"Error trigger: {e}")
-
-        self.toggle_server()
-
-    # -----------------------
-    # BACK + OK + SCROLL + JOY
-    # -----------------------
-    def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
-
-        # BACK → pustit systému
-        if key in (4, 27, 1001):
-            return False
-
-        # OK / ENTER
-        if key in (13, 271, 23, 66):
-            return True
-
-        return False
-
-
-    def _on_keyboard_up(self, window, key, scancode):
-
-        # BACK → nic nedělat
-        if key in (4, 27, 1001):
-            return False
-
-        # OK → akce
-        if key in (13, 271, 23, 1073741943):
-            self._trigger_button()
-            return True
-
-        return False
-
-
-    def _on_joy(self, window, stick_id, button_id):
-
-        # 🔙 BACK → pustit systému
-        if button_id == 4:
-            return False
-
-        # ✅ OK
-        if button_id == 0:
-            self._trigger_button()
-            return True
-
-        # ⬆️ UP
-        if button_id == 11:
-            self._scroll_log(0.1)
-            return True
-
-        # ⬇️ DOWN
-        if button_id == 12:
-            self._scroll_log(-0.1)
-            return True
-
-        return False
-
-    # -----------------------
-    # 🔥 SCROLL LOG
-    # -----------------------
-    def _scroll_log(self, amount):
-        try:
-            scroll_view = self.root.ids.log_label.parent
-            scroll_view.scroll_y = min(1, max(0, scroll_view.scroll_y + amount))
-        except:
-            pass
 
     # -----------------------
     # 🎨 UI
@@ -338,22 +255,18 @@ class App(MDApp):
 
             if not self.check_and_prepare():
                 return
+
             self.button_text = "STOP"
             self.add_log("\nServer START")
 
             Clock.schedule_once(lambda dt: check_plugins(self.add_log, self.add_error), 0)
 
-
-            if ANDROID:
-                try:
-                    service = autoclass('org.pyserve.pyserve.ServiceServer')
-                    mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
-                    service.start(mActivity, 'small_icon', 'PyServe', 'Server running...', '')
-                except Exception as e:
-                    self.add_error(f"SERVICE START ERROR: {e}")
-                    return
-            else:
-                self.add_log("Service only on Android")
+            try:
+                service = autoclass('org.pyserve.pyserve.ServiceServer')
+                mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
+                service.start(mActivity, 'small_icon', 'PyServe', 'Server running...', '')
+            except Exception as e:
+                self.add_error(f"SERVICE START ERROR: {e}")
                 return
 
             def check(dt):
@@ -365,22 +278,19 @@ class App(MDApp):
                     self.button_text = "START"
                     self.add_error("Server failed")
 
-            Clock.schedule_once(check, 1.5)
+            Clock.schedule_once(check, 2)
 
         else:
             self.button_text = "START"
             self.running = False
             self.add_log("Server STOP")
 
-            if ANDROID:
-                try:
-                    service = autoclass('org.pyserve.pyserve.ServiceServer')
-                    mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
-                    service.stop(mActivity)
-                except Exception as e:
-                    self.add_error(f"SERVICE STOP ERROR: {e}")
-            else:
-                self.add_log("Service only on Android")
+            try:
+                service = autoclass('org.pyserve.pyserve.ServiceServer')
+                mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
+                service.stop(mActivity)
+            except Exception as e:
+                self.add_error(f"SERVICE STOP ERROR: {e}")
 
     # -----------------------
     # 🌐 OPEN WEB
@@ -391,7 +301,6 @@ class App(MDApp):
 
         try:
             webbrowser.open(self.url_display)
-            self.add_log("Opening web")
         except Exception as e:
             self.add_error(f"OPEN WEB ERROR: {e}")
 
@@ -401,30 +310,76 @@ class App(MDApp):
     def open_github(self):
         try:
             webbrowser.open("https://github.com/Saros72/PyServe")
-            self.add_log("\n => Opening GitHub/PyServe")
         except Exception as e:
             self.add_error(f"GITHUB ERROR: {e}")
 
     def open_plugins(self):
         try:
-            webbrowser.open("https://github.com/")
-            self.add_log("\n => Opening GitHub/Plugins")
+            webbrowser.open("https://github.com/Saros72/PyServe-Plugins")
         except Exception as e:
             self.add_error(f"GITHUB ERROR: {e}")
 
     def send_email(self):
         try:
             webbrowser.open("mailto:ss72@seznam.cz")
-            self.add_log("\n => Opening email client")
         except Exception as e:
             self.add_error(f"EMAIL ERROR: {e}")
 
     def open_paypal(self):
         try:
             webbrowser.open("https://paypal.me/petrsarka")
-            self.add_log("\n => Opening PayPal.Me")
+            self.add_log("Opening PayPal.Me")
         except Exception as e:
             self.add_error(f"PAYPAL ERROR: {e}")
+
+    def open_share(self):
+        try:
+            url = "https://github.com/Saros72/PyServe/releases/latest"
+            share_text(str(url))
+        except Exception as e:
+            self.add_error(f"SHARE ERROR: {e}")
+
+
+    # -----------------------
+    # 🔑 PERMISSION DIALOG 
+    # -----------------------
+    def show_permission_dialog(self):
+
+        self.dialog = MDDialog(
+            title="Warning",
+            text=(
+                "This app runs a local server in a foreground service.\n"
+                "To work properly, it requires access to all files.\n\n"
+                "Allow access in system settings?"
+            ),
+            radius=[16, 16, 16, 16],
+            buttons=[
+                MDFlatButton(
+                    text="LATER",
+                    theme_text_color="Custom",
+                    text_color=self.custom_blue,
+                    on_release=lambda x: self.dialog.dismiss()
+                ),
+                MDRaisedButton(
+                    text="ALLOW",
+                    md_bg_color=self.custom_blue,
+                    on_release=lambda x: self.allow_permissions()
+                ),
+            ],
+        )
+        self.dialog.ids.title.theme_text_color = "Custom"
+        self.dialog.ids.title.text_color = [0.9, 0.2, 0.2, 1] 
+        self.dialog.ids.text.theme_text_color = "Custom"
+        self.dialog.ids.text.text_color = [0, 0, 0, 1]
+
+        self.dialog.open()
+
+    # -----------------------
+    # OPEN SETTINGS
+    # -----------------------
+    def allow_permissions(self):
+        self.dialog.dismiss()
+        open_all_files_permission()
 
 
 if __name__ == "__main__":
