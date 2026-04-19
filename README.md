@@ -112,8 +112,9 @@ You can use:
 - datetime
 
 ### ✔ Additional modules
-- bs4
+- beautifulsoup4
 - websocket-client
+- m3u8
 
 ### ✔ Server / networking
 - bottle
