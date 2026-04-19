@@ -29,15 +29,13 @@ Plugins are located at:
 
 Each plugin is a separate folder:
 
+```
 PyServe/
- └── demo/
-     └── default.py
-
-or
-
-PyServe/
+ ├── demo/
+ │   └── default.py
  └── my_plugin/
      └── main.py
+```
 
 ---
 
@@ -128,38 +126,33 @@ You can use:
 To ensure the app works correctly on Android:
 
 ### 🔐 Permissions
-- You must allow **"All files access"** (Manage external storage)
-- This is required because plugins are loaded from:
+- You must allow **"All files access"**
+- Required because plugins are stored in:
   `/storage/emulated/0/PyServe/`
 
 ### ⚙️ Foreground service
-- The server runs as a **foreground service**
-- This prevents Android from killing it in the background
-- You will see a persistent notification while the server is running
+- Server runs as a **foreground service**
+- Prevents Android killing it in background
+- Persistent notification is shown while running
 
 ### 🔋 Battery optimization
-- It is recommended to **disable battery optimization** for the app
-- Otherwise, Android may stop the server after some time
-
-### 📂 Storage behavior
-- On first launch, the app automatically:
-  - creates the plugin directory
-  - copies a demo plugin
-- Make sure storage permissions are granted before first run
+- Disable battery optimization for best stability
+- Otherwise Android may stop the server
 
 ---
 
 ## ⚠️ Important notes
 
 - Plugins run in the same Python runtime as the app
-- A broken plugin will NOT crash the server
-- All plugin errors are isolated and logged
-- Intended for local/development use only
+- Broken plugin does NOT crash the server
+- Errors are isolated and logged
+- Intended for local development use only
 
 ---
 
 ## 📂 Project structure
 
+```
 PyServe/
  ├── main.py
  ├── plugin_loader.py
@@ -168,7 +161,9 @@ PyServe/
  │    └── layout.kv
  ├── assets/
  └── /storage/emulated/0/PyServe/
+      ├── demo/
       └── plugins...
+```
 
 ---
 
@@ -204,3 +199,5 @@ def register(app):
 - Plugin-based architecture experiments
 - Offline server tools
 - Learning Bottle and Python web servers
+```
+```
