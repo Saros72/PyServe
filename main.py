@@ -114,8 +114,6 @@ class App(MDApp):
 
     def on_start(self):
 
-        first_run = False
-
         self.url_display = "http://127.0.0.1:9666"
         self.add_log("=== APP START ===")
 
@@ -131,11 +129,13 @@ class App(MDApp):
             self.button_text = "START"
             self.add_log("Server not running")
 
-        if self.store.exists("app"):
-            first_run = self.store.get("app").get("first_run", True)
+        if not self.store.exists("app"):
+            self.store.put("app", first_run=True)
+
+        first_run = self.store.get("app")["first_run"]
 
         if first_run:
-            Clock.schedule_once(lambda dt: self.show_permission_dialog(), 0.5)
+            Clock.schedule_once(lambda dt: self.show_permission_dialog(), 1)
             self.store.put("app", first_run=False)
 
     # -----------------------
