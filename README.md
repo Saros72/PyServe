@@ -181,7 +181,6 @@ PyServe/
 ## 🧪 Example plugin
 
 ```python
-from bottle import route
 
 def register(app):
 
