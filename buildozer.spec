@@ -12,7 +12,7 @@ source.include_exts = py,png,jpg,kv,json,txt
 android.add_asset_dirs = assets
 
 # --- REQUIREMENTS ---
-requirements = python3,kivy,bottle,requests,kivymd,pillow,pyjnius,plyer,beautifulsoup4,lxml,typing_extensions,websocket-client
+requirements = python3,kivy,bottle,requests,kivymd,pillow,pyjnius,plyer,bs4,websocket-client
 
 # --- SERVICES ---
 services = server:service.py:foreground:sticky
