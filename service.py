@@ -1,10 +1,12 @@
+import os
+import certifi
+os.environ['SSL_CERT_FILE'] = certifi.where()
+
 import time
 import threading
-import os
 import html
 
 from bottle import Bottle
-
 from plugin_loader import load_plugins
 
 # 📂 ROOT
