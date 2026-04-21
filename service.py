@@ -1,6 +1,44 @@
 import os
+import ssl
 import certifi
-os.environ['SSL_CERT_FILE'] = certifi.where()
+
+# =====================================================
+# 🌐 SSL FIX PRO CELÝ ANDROID PYTHON RUNTIME
+# =====================================================
+
+# Requests + urllib certifikáty
+os.environ["SSL_CERT_FILE"] = certifi.where()
+os.environ["REQUESTS_CA_BUNDLE"] = certifi.where()
+
+# HTTPS default context (urllib, některé knihovny)
+def _patched_ssl_context(*args, **kwargs):
+    return ssl.create_default_context(cafile=certifi.where())
+
+ssl._create_default_https_context = _patched_ssl_context
+
+
+# =====================================================
+# 🔌 WEBSOCKET FIX (SSL + TIMEOUT)
+# =====================================================
+
+import websocket
+
+# timeout aby websocket nezamrzl
+websocket.setdefaulttimeout(20)
+
+_original_create_connection = websocket.create_connection
+
+def patched_create_connection(*args, **kwargs):
+    # pokud plugin nic nenastaví → přidáme bezpečné SSL
+    if "sslopt" not in kwargs:
+        kwargs["sslopt"] = {
+            "ca_certs": certifi.where(),
+            "cert_reqs": ssl.CERT_REQUIRED
+        }
+
+    return _original_create_connection(*args, **kwargs)
+
+websocket.create_connection = patched_create_connection
 
 import time
 import threading
