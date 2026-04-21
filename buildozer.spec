@@ -12,14 +12,14 @@ source.include_exts = py,png,jpg,kv,json,txt
 android.add_asset_dirs = assets
 
 # --- REQUIREMENTS ---
-requirements = python3,kivy,bottle,requests,kivymd,pillow,pyjnius,plyer,beautifulsoup4,typing_extensions,websocket-client,m3u8,certifi
+requirements = python3,kivy,bottle,requests,kivymd,pillow,pyjnius,plyer,beautifulsoup4,typing_extensions,websocket-client
 
 # --- SERVICES ---
 services = server:service.py:foreground:sticky
 
 # --- UI ---
 # portrait or landscape
-orientation = portrait
+orientation = landscape
 fullscreen = 0
 
 # --- ANDROID SDK ---
@@ -31,6 +31,7 @@ android.target = 31
 android.permissions = INTERNET,POST_NOTIFICATIONS,FOREGROUND_SERVICE,MANAGE_EXTERNAL_STORAGE
 
 # --- ARCH ---
+#android.archs = arm64-v8a,armeabi-v7a
 android.archs = arm64-v8a
 
 # --- ICON ---
