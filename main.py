@@ -130,6 +130,12 @@ class App(MDApp):
         kv_file = "ui/layout_tv.kv" if self.is_tv else "ui/layout.kv"
 
         root = Builder.load_file(kv_file)
+
+        # 👉 TV / GAMEPAD
+        Window.bind(on_key_down=self._on_keyboard)
+        Window.bind(on_key_up=self._on_keyboard_up)
+        Window.bind(on_joy_button_down=self._on_joy)
+
         return root
 
     def on_start(self):
@@ -138,7 +144,8 @@ class App(MDApp):
         self.add_log("=== APP START ===")
 
         self.update_system_bars()
-        self.check_and_prepare()
+        if not self.check_and_prepare():
+            Clock.schedule_once(lambda dt: self.show_permission_dialog(), 1)
 
         if is_server_running():
             self.running = True
@@ -148,9 +155,6 @@ class App(MDApp):
             self.running = False
             self.button_text = "START"
             self.add_log("Server not running")
-
-        if not self.check_and_prepare():
-            Clock.schedule_once(lambda dt: self.show_permission_dialog(), 1)
 
     # -----------------------
     # 🔥 CHECK PERMISSION
@@ -175,6 +179,57 @@ class App(MDApp):
             self.ready = False
             self.add_error(f"Storage access ERROR: {e}")
             return False
+
+
+    # -----------------------
+    # 🎮 TV / REMOTE CONTROL
+    # -----------------------
+    def _trigger_button(self):
+
+        if hasattr(self, "root") and self.root:
+            try:
+                btn = self.root.ids.start_button
+
+                normal_color = btn.md_bg_color[:]
+
+                btn.md_bg_color = [
+                    max(0, c * 0.65) for c in normal_color[:3]
+                ] + [1]
+
+                def release(dt):
+                    btn.trigger_action(duration=0.1)
+
+                    def reset_color(dt2):
+                        btn.md_bg_color = normal_color
+
+                    Clock.schedule_once(reset_color, 0.1)
+
+                Clock.schedule_once(release, 0.05)
+                return
+
+            except Exception as e:
+                print(f"Error trigger: {e}")
+
+        # fallback
+        self.toggle_server()
+
+    def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
+        if key in (13, 271, 23):
+            return True
+        return False
+
+    def _on_keyboard_up(self, window, key, scancode):
+        if key in (13, 271, 23, 1073741943):
+            self._trigger_button()
+            return True
+        return False
+
+    def _on_joy(self, window, stick_id, button_id):
+        # OK Gamepad
+        if button_id in (0, 96, 23):
+            self._trigger_button()
+            return True
+        return False
 
 
     # -----------------------
