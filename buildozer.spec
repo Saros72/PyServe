@@ -19,7 +19,7 @@ services = server:service.py:foreground:sticky
 
 # --- UI ---
 # portrait or landscape
-orientation = landscape
+orientation = portrait
 fullscreen = 0
 
 # --- ANDROID SDK ---
@@ -31,7 +31,8 @@ android.target = 31
 android.permissions = INTERNET,POST_NOTIFICATIONS,FOREGROUND_SERVICE,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,MANAGE_EXTERNAL_STORAGE
 
 # --- ARCH ---
-android.archs = arm64-v8a,armeabi-v7a
+#android.archs = arm64-v8a,armeabi-v7a
+android.archs = arm64-v8a
 
 # --- ICON ---
 icon.filename = assets/icon.png

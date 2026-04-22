@@ -23,7 +23,6 @@ Window.fullscreen = False
 BASE_DIR = "/storage/emulated/0/PyServe"
 PLUGIN_DIR = os.path.join(BASE_DIR, "demo")
 ERROR_LOG_FILE = os.path.join(BASE_DIR, "error_log.txt")
-kv_file = "ui/layout_tv.kv"
 
 
 Intent = autoclass('android.content.Intent')
@@ -107,9 +106,30 @@ class App(MDApp):
         self.log_queue = []
 
         Clock.schedule_interval(self._process_log_queue, 0.2)
-        self.store = JsonStore("app_state.json")
-        root = Builder.load_file(kv_file)
 
+
+        # -----------------------
+        # TV / MOBILE
+        # -----------------------
+        self.is_tv = False
+
+        try:
+            UiModeManager = autoclass('android.app.UiModeManager')
+            Context = autoclass('android.content.Context')
+            PythonActivity = autoclass('org.kivy.android.PythonActivity')
+
+            context = PythonActivity.mActivity
+            ui_mode = context.getSystemService(Context.UI_MODE_SERVICE)
+
+            # TV mode = 4
+            if ui_mode.getCurrentModeType() == 4:
+                self.is_tv = True
+        except:
+            self.is_tv = False
+
+        kv_file = "ui/layout_tv.kv" if self.is_tv else "ui/layout.kv"
+
+        root = Builder.load_file(kv_file)
         return root
 
     def on_start(self):
@@ -129,14 +149,8 @@ class App(MDApp):
             self.button_text = "START"
             self.add_log("Server not running")
 
-        if not self.store.exists("app"):
-            self.store.put("app", first_run=True)
-
-        first_run = self.store.get("app")["first_run"]
-
-        if first_run:
+        if not self.check_and_prepare():
             Clock.schedule_once(lambda dt: self.show_permission_dialog(), 1)
-            self.store.put("app", first_run=False)
 
     # -----------------------
     # 🔥 CHECK PERMISSION
