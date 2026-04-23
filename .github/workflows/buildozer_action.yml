@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read   # ❌ už nepotřebujeme write (žádný release)
+  contents: write
 
 jobs:
   build:
@@ -13,8 +13,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ❌ Cache vypnuta pro jistotu (kvůli problémům s dependency)
-      # Pokud chceš později zrychlit build, dá se vrátit
+      # Cache Buildozer global directory
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v4
+        with:
+          path: ~/.buildozer
+          key: ${{ runner.os }}-buildozer-global
+          restore-keys: |
+            ${{ runner.os }}-buildozer-global
+
+      # Cache Buildozer directory in app
+      - name: Cache Buildozer directory in app
+        uses: actions/cache@v4
+        with:
+          path: .buildozer
+          key: ${{ runner.os }}-buildozer-app-v2
+          restore-keys: |
+            ${{ runner.os }}-buildozer-app
+
+      # Cache Android SDK
+      - name: Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.buildozer/android/platform/android-sdk
+          key: ${{ runner.os }}-android-sdk
+          restore-keys: |
+            ${{ runner.os }}-android-sdk
 
       # Install dependencies
       - name: Install dependencies
@@ -79,11 +103,10 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython==0.29.33
 
-      # 🔥 FULL CLEAN (hlavní fix!)
-      - name: Full clean Buildozer
+      # Clean build
+      - name: Clean build
         run: |
           rm -rf .buildozer
-          rm -rf ~/.buildozer
           rm -rf bin
 
       # Build APK
@@ -91,12 +114,25 @@ jobs:
         run: |
           yes | buildozer -v android debug
 
-      # 📦 Upload artifact (jen pro stažení)
+      # Upload artifact (ZIP v Actions)
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pyserve-apk
+          name: package
           path: |
             bin/*.apk
             bin/*.aab
           retention-days: 3
+
+      # 🚀 GitHub Release
+      - name: Upload APK to GitHub Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.run_number }}
+          name: PyServe Build #${{ github.run_number }}
+          files: bin/*.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
