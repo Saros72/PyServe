@@ -1,218 +1,84 @@
+import os
 import time
 import threading
 import html
-import os
 
+# 🔥 Bottle
 from bottle import Bottle
 from plugin_loader import load_plugins
+
+# 🔥 WebDAV
+from wsgidav.wsgidav_app import WsgiDAVApp
+from cheroot import wsgi
+
 
 # 📂 ROOT
 BASE_DIR = "/storage/emulated/0/PyServe"
 
-
-# -----------------------
-# APP
-# -----------------------
 app = Bottle()
 
 
 # -----------------------
-# HELPERS
+# DAV SERVER
 # -----------------------
-def safe_join(base, *paths):
-    return os.path.normpath(os.path.join(base, *paths))
-
-
-def is_hidden(name):
-    return name == "__pycache__"
-
-
-# -----------------------
-# BROWSER
-# -----------------------
-@app.route('/')
-@app.route('/browse')
-@app.route('/browse/<path:path>')
-def browse(path=""):
-
-    if ".." in path:
-        return "blocked"
-
-    current = safe_join(BASE_DIR, path)
-
-    if not os.path.exists(current):
-        return "Not found"
-
-    items = []
+def start_dav():
+    print("🔥 WebDAV start")
 
     try:
-        entries = os.listdir(current)
+        config = {
+            "provider_mapping": {
+                "/": BASE_DIR
+            },
+            "simple_dc": {
+                "user_mapping": {
+                    "*": True
+                }
+            },
+        }
 
-        # folders first
-        entries.sort(key=lambda x: (not os.path.isdir(os.path.join(current, x)), x.lower()))
+        dav_app = WsgiDAVApp(config)
 
-        for name in entries:
+        server = wsgi.Server(
+            bind_addr=("0.0.0.0", 9667),
+            wsgi_app=dav_app
+        )
 
-            if is_hidden(name):
-                continue
-
-            full = os.path.join(current, name)
-            rel = os.path.join(path, name).replace("\\", "/")
-
-            if os.path.isdir(full):
-                items.append(f"""
-                <a class="row folder" href="/browse/{rel}">
-                    <span class="icon">📁</span>
-                    <span class="name">{name}</span>
-                    <span class="arrow">›</span>
-                </a>
-                """)
-            else:
-                items.append(f"""
-                <a class="row file" href="/file/{rel}">
-                    <span class="icon">📄</span>
-                    <span class="name">{name}</span>
-                </a>
-                """)
+        print("✅ WebDAV běží na :9667")
+        server.start()
 
     except Exception as e:
-        return f"Error: {e}"
+        print("❌ DAV ERROR:", e)
 
-    return f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            body {{
-                margin: 0;
-                background: #000;
-                color: #fff;
-                font-family: Arial, sans-serif;
-            }}
 
-            .path {{
-                padding: 10px;
-                font-size: 14px;
-                color: #aaa;
-                border-bottom: 1px solid #111;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }}
-
-            .row {{
-                display: flex;
-                align-items: center;
-                padding: 12px;
-                text-decoration: none;
-                color: #fff;
-                border-bottom: 1px solid #111;
-                font-size: 14px;
-            }}
-
-            .row:active {{
-                background: #111;
-            }}
-
-            .icon {{
-                width: 28px;
-            }}
-
-            .name {{
-                flex: 1;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }}
-
-            .arrow {{
-                color: #777;
-            }}
-
-            .file {{
-                color: #ddd;
-            }}
-
-            .folder {{
-                color: #fff;
-            }}
-        </style>
-    </head>
-
-    <body>
-        <div class="path">{"/" if not path else path}</div>
-        {''.join(items)}
-    </body>
-    </html>
-    """
+def start_dav_thread():
+    t = threading.Thread(target=start_dav, daemon=True)
+    t.start()
 
 
 # -----------------------
-# FILE VIEWER (IMPORTANT FIX)
+# BOTTLE SERVER
 # -----------------------
-@app.route('/file/<path:path>')
-def view_file(path):
+def start_bottle():
+    print("🔥 Bottle start")
 
-    if ".." in path:
-        return "blocked"
-
-    full = safe_join(BASE_DIR, path)
-
-    if not os.path.exists(full):
-        return "Not found"
-
-    try:
-        with open(full, "r", encoding="utf-8") as f:
-            content = f.read()
-    except Exception as e:
-        return f"Cannot open file: {e}"
-
-    # 🔥 critical: preserve formatting + prevent HTML rendering
-    content = html.escape(content)
-
-    return f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            body {{
-                margin: 0;
-                background: #000;
-                color: #fff;
-                font-family: monospace;
-            }}
-
-            pre {{
-                margin: 0;
-                padding: 12px;
-                white-space: pre;
-                overflow-x: auto;
-                font-size: 13px;
-                line-height: 1.4;
-            }}
-        </style>
-    </head>
-
-    <body>
-        <pre>{content}</pre>
-    </body>
-    </html>
-    """
-
-
-# -----------------------
-# SERVER
-# -----------------------
-def start_server():
     load_plugins(app)
+
     app.run(host='0.0.0.0', port=9666, quiet=True)
 
 
+def start_bottle_thread():
+    t = threading.Thread(target=start_bottle, daemon=True)
+    t.start()
+
+
+# -----------------------
+# MAIN
+# -----------------------
 if __name__ == '__main__':
-    server_thread = threading.Thread(target=start_server, daemon=True)
-    server_thread.start()
+    start_dav_thread()      # WebDAV
+    start_bottle_thread()   # PyServe + pluginy
+
+    print("🚀 SERVER READY")
 
     while True:
         time.sleep(1)

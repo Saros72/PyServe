@@ -4,6 +4,7 @@ from kivy.core.window import Window
 from kivymd.utils.set_bars_colors import set_bars_colors
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
+from kivymd.toast import toast
 from kivy.utils import get_color_from_hex
 from kivy.properties import StringProperty, BooleanProperty, ListProperty
 from kivy.clock import Clock
@@ -39,6 +40,15 @@ def open_all_files_permission():
     intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
     uri = Uri.parse("package:" + activity.getPackageName())
 
+    intent.setData(uri)
+    activity.startActivity(intent)
+
+
+@run_on_ui_thread
+def open_app_details():
+    activity = PythonActivity.mActivity
+    intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+    uri = Uri.parse("package:" + activity.getPackageName())
     intent.setData(uri)
     activity.startActivity(intent)
 
@@ -99,6 +109,9 @@ class App(MDApp):
     running = BooleanProperty(False)
     ready = BooleanProperty(False)
 
+    dialog = None
+    back_pressed_once = False
+
     LOG_SCROLL_STEP = 0.06
 
     def build(self):
@@ -140,7 +153,7 @@ class App(MDApp):
 
     def on_start(self):
 
-        self.url_display = "http://127.0.0.1:9666"
+        self.url_display = f"http://{get_ip()}:9666" if self.is_tv else "http://127.0.0.1:9666"
         self.add_log("=== APP START ===")
 
         self.update_system_bars()
@@ -213,22 +226,62 @@ class App(MDApp):
         # fallback
         self.toggle_server()
 
+    def reset_back_button(self, dt):
+        self.back_pressed_once = False
+
     def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
+        if key == 27:  # Back button
+            if self.dialog and self.dialog.parent:
+                self.dialog.dismiss()
+                return True
+            
+            if not self.back_pressed_once:
+                self.back_pressed_once = True
+                toast("Press back again to exit")
+                Clock.schedule_once(self.reset_back_button, 2)
+                return True
+            if self.running:
+                toast("Server continues running in background")
+            return False
+
         if key in (13, 271, 23):
             return True
         return False
 
     def _on_keyboard_up(self, window, key, scancode):
         if key in (13, 271, 23, 1073741943):
-            self._trigger_button()
+            if self.dialog and self.dialog.parent:
+                self.allow_permissions()
+            else:
+                self._trigger_button()
             return True
         return False
 
     def _on_joy(self, window, stick_id, button_id):
         # OK Gamepad
         if button_id in (0, 96, 23):
-            self._trigger_button()
+            if self.dialog and self.dialog.parent:
+                self.allow_permissions()
+            else:
+                self._trigger_button()
             return True
+
+        if button_id == 4:  # Back button
+            if self.dialog and self.dialog.parent:
+                self.dialog.dismiss()
+                return True
+            
+            if not self.back_pressed_once:
+                self.back_pressed_once = True
+                toast("Press back again to exit")
+                Clock.schedule_once(self.reset_back_button, 2)
+            else:
+                if self.running:
+                    toast("Server continues running in background")
+                Clock.schedule_once(lambda dt: self.stop(), 0.5)
+                return True
+            return False
+
         return False
 
 
@@ -369,7 +422,7 @@ class App(MDApp):
             return
 
         try:
-            webbrowser.open(self.url_display)
+            webbrowser.open(self.url_display + "/demo")
         except Exception as e:
             self.add_error(f"OPEN WEB ERROR: {e}")
 
@@ -413,7 +466,28 @@ class App(MDApp):
     # 🔑 PERMISSION DIALOG 
     # -----------------------
     def show_permission_dialog(self):
+        # 1. Definujeme tlačítko ALLOW (to tam je vždy)
+        allow_button = MDRaisedButton(
+            text="ALLOW",
+            md_bg_color=self.custom_blue,
+            on_release=lambda x: self.allow_permissions()
+        )
 
+        # 2. Rozhodneme, jaká tlačítka se zobrazí
+        if self.is_tv:
+            # Pro TV režim jen jedno tlačítko
+            buttons_to_show = [allow_button]
+        else:
+            # Pro mobil/jiné režimy dvě tlačítka (LATER a ALLOW)
+            later_button = MDFlatButton(
+                text="LATER",
+                theme_text_color="Custom",
+                text_color=self.custom_blue,
+                on_release=lambda x: self.dialog.dismiss()
+            )
+            buttons_to_show = [later_button, allow_button]
+
+        # 3. Vytvoříme dialog s dynamickým seznamem tlačítek
         self.dialog = MDDialog(
             title="Warning",
             text=(
@@ -422,20 +496,10 @@ class App(MDApp):
                 "Allow access in system settings?"
             ),
             radius=[16, 16, 16, 16],
-            buttons=[
-                MDFlatButton(
-                    text="LATER",
-                    theme_text_color="Custom",
-                    text_color=self.custom_blue,
-                    on_release=lambda x: self.dialog.dismiss()
-                ),
-                MDRaisedButton(
-                    text="ALLOW",
-                    md_bg_color=self.custom_blue,
-                    on_release=lambda x: self.allow_permissions()
-                ),
-            ],
+            buttons=buttons_to_show, # Použijeme připravený seznam
         )
+
+        # 4. Styling (zůstává stejný)
         self.dialog.ids.title.theme_text_color = "Custom"
         self.dialog.ids.title.text_color = [0.9, 0.2, 0.2, 1] 
         self.dialog.ids.text.theme_text_color = "Custom"
@@ -443,12 +507,16 @@ class App(MDApp):
 
         self.dialog.open()
 
+
     # -----------------------
     # OPEN SETTINGS
     # -----------------------
     def allow_permissions(self):
         self.dialog.dismiss()
-        open_all_files_permission()
+        if self.is_tv:
+            open_app_details()
+        else:
+            open_all_files_permission()
 
 
 if __name__ == "__main__":
