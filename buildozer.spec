@@ -12,7 +12,7 @@ source.include_exts = py,png,jpg,kv,json,txt
 android.add_asset_dirs = assets
 
 # --- REQUIREMENTS ---
-requirements = python3,kivy,bottle,requests,kivymd,pillow,pyjnius,plyer,beautifulsoup4,typing_extensions,websocket-client,wsgidav,cheroot,defusedxml
+requirements = python3,kivy,bottle,requests,kivymd,pillow,pyjnius,plyer,beautifulsoup4,typing_extensions,websocket-client,wsgidav,cheroot,defusedxml,jinja2,markupsafe,json5,pyyaml==6.0.1,jaraco.functools,more-itertools
 
 # --- SERVICES ---
 services = server:service.py:foreground:sticky
