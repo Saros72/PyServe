@@ -1,6 +1,7 @@
 import os
 import importlib.util
 import traceback
+import logging
 
 # 📂 Plugin root
 PLUGIN_DIR = "/storage/emulated/0/PyServe"
@@ -48,33 +49,23 @@ def check_plugins(log_func, error_func):
             # UI krátké
             error_func(f"{folder}: ERROR")
 
-            tb = traceback.extract_tb(e.__traceback__)
-
-            file_info = ""
-            if tb:
-                last = tb[-1]
-                file_info = f'File "{last.filename}", line {last.lineno}, in {last.name}'
-
-            try:
-                with open("/storage/emulated/0/PyServe/error_log.txt", "a", encoding="utf-8") as f:
-                    f.write("\n" + "=" * 40 + "\n")
-                    f.write(f"PLUGIN: {folder}\n")
-                    f.write(f"{file_info}\n")
-                    f.write(f"ERROR: {str(e)}\n")
-            except:
-                pass
-
 
 # -----------------------
 # PLUGIN LOADER
 # -----------------------
+
+plugin_log = logging.getLogger("PLUGINS")
+
+
 def load_plugins(app):
     print(f"🔌 Loading plugins from: {PLUGIN_DIR}")
+#    plugin_log.info("\n=== PLUGIN LOAD START ===")
 
     try:
         folders = os.listdir(PLUGIN_DIR)
-    except Exception as e:
-        print(f"❌ PLUGIN LOAD ERROR: {e}")
+    except Exception:
+        print("❌ PLUGIN LOAD ERROR")
+        plugin_log.error("PLUGIN ACCESS ERROR")
         return
 
     for folder in folders:
@@ -83,17 +74,18 @@ def load_plugins(app):
         if not os.path.isdir(plugin_path):
             continue
 
-        # 🔥 entry file resolve
         main_file = os.path.join(plugin_path, "main.py")
         if not os.path.exists(main_file):
             main_file = os.path.join(plugin_path, "default.py")
 
         if not os.path.exists(main_file):
-            print(f"⚠️ No entry script in plugin: {folder}")
+            print(f"⚠️ No entry: {folder}")
+            plugin_log.warning(f"{folder}: no entry file")
             continue
 
         if folder in loaded_plugins:
-            print(f"⚠️ Plugin already loaded: {folder}")
+            print(f"⚠️ Already loaded: {folder}")
+            plugin_log.warning(f"{folder}: already loaded")
             continue
 
         try:
@@ -101,23 +93,29 @@ def load_plugins(app):
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
-            # 🔥 plugin init
             if hasattr(module, "register"):
                 module.register(app)
                 loaded_plugins.add(folder)
-                print(f"✅ Loaded plugin: {folder}")
+
+                print(f"✅ Loaded: {folder}")
+                plugin_log.info(f"{folder}: OK")
             else:
-                print(f"⚠️ Plugin {folder} has no register()")
+                print(f"⚠️ No register(): {folder}")
+                plugin_log.warning(f"{folder}: no register()")
 
         except Exception as e:
             print(f"❌ Plugin error: {folder}")
-            print(traceback.format_exc())
+            tb = traceback.extract_tb(e.__traceback__)
 
-            try:
-                with open("/storage/emulated/0/PyServe/error_log.txt", "a", encoding="utf-8") as f:
-                    f.write("\n" + "=" * 40 + "\n")
-                    f.write(f"PLUGIN LOAD ERROR: {folder}\n")
-                    f.write(f"ERROR: {str(e)}\n")
-                    f.write(traceback.format_exc())
-            except:
-                pass
+            if tb:
+                last = tb[-1]
+                file = os.path.basename(last.filename)
+                line = last.lineno
+                func = last.name
+            else:
+                file = "unknown"
+                line = "?"
+
+            plugin_log.error(f"{folder}: ERROR")
+            plugin_log.error(f"{type(e).__name__}: {e}")
+            plugin_log.error(f"{file}:{line} in {func}")

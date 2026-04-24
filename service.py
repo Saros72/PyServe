@@ -1,7 +1,6 @@
 import os
 import time
 import threading
-import html
 import logging
 
 # -----------------------
@@ -10,15 +9,19 @@ import logging
 BASE_DIR = "/storage/emulated/0/PyServe"
 os.makedirs(BASE_DIR, exist_ok=True)
 
-LOG_FILE = os.path.join(BASE_DIR, "service.log")
+LOG_FILE = os.path.join(BASE_DIR, "service_log.txt")
 
+# 🔥 root config
 logging.basicConfig(
     filename=LOG_FILE,
-    level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+    format="%(asctime)s | %(name)s | %(levelname)s | %(message)s",
 )
 
-logging.info("=== SERVICE START ===")
+# 🔥 loggers
+server_log = logging.getLogger("SERVER")
+plugin_log = logging.getLogger("PLUGINS")
+
 
 # -----------------------
 # 🔥 Bottle
@@ -37,32 +40,22 @@ try:
     from wsgidav.wsgidav_app import WsgiDAVApp
     from cheroot import wsgi
     DAV_AVAILABLE = True
-    logging.info("WebDAV available")
 except Exception as e:
-    logging.error(f"WebDAV import failed: {e}")
-
+    server_log.error(f"WebDAV import failed")
 
 # -----------------------
 # 🔥 DAV SERVER
 # -----------------------
 def start_dav():
     if not DAV_AVAILABLE:
-        logging.warning("WebDAV disabled")
+        server_log.warning("WebDAV disabled")
         return
-
-    logging.info("WebDAV starting...")
 
     try:
         config = {
-            "provider_mapping": {
-                "/": BASE_DIR
-            },
-            "simple_dc": {
-                "user_mapping": {
-                    "*": True
-                }
-            },
-            "verbose": 1,
+            "provider_mapping": {"/": BASE_DIR},
+            "simple_dc": {"user_mapping": {"*": True}},
+            "verbose": 0,
         }
 
         dav_app = WsgiDAVApp(config)
@@ -72,51 +65,40 @@ def start_dav():
             wsgi_app=dav_app
         )
 
-        logging.info("WebDAV running on port 9667")
+        server_log.info("WebDAV started on :9667")
+
         server.start()
 
-    except Exception as e:
-        logging.exception(f"WebDAV ERROR: {e}")
-
+    except Exception:
+        server_log.error("WebDAV FAILED")
 
 def start_dav_thread():
-    t = threading.Thread(target=start_dav, daemon=True)
-    t.start()
-
+    threading.Thread(target=start_dav, daemon=True).start()
 
 # -----------------------
 # 🔥 BOTTLE SERVER
 # -----------------------
 def start_bottle():
-    logging.info("Bottle starting...")
-
     try:
         load_plugins(app)
-        logging.info("Plugins loaded")
 
+        import logging as pylogging
+        pylogging.getLogger('bottle').setLevel(pylogging.WARNING)
+        server_log.info("Bottle started on :9666")
         app.run(host='0.0.0.0', port=9666, quiet=True)
 
-    except Exception as e:
-        logging.exception(f"Bottle ERROR: {e}")
-
+    except Exception:
+        server_log.error("Bottle FAILED")
 
 def start_bottle_thread():
-    t = threading.Thread(target=start_bottle, daemon=True)
-    t.start()
-
+    threading.Thread(target=start_bottle, daemon=True).start()
 
 # -----------------------
 # 🔥 MAIN
 # -----------------------
 if __name__ == '__main__':
-    try:
-        start_dav_thread()
-        start_bottle_thread()
+    start_dav_thread()
+    start_bottle_thread()
 
-        logging.info("SERVER READY")
-
-        while True:
-            time.sleep(1)
-
-    except Exception as e:
-        logging.exception(f"MAIN LOOP ERROR: {e}")
+    while True:
+        time.sleep(1)

@@ -23,7 +23,7 @@ Window.fullscreen = False
 # 📂 PATHS
 BASE_DIR = "/storage/emulated/0/PyServe"
 PLUGIN_DIR = os.path.join(BASE_DIR, "demo")
-ERROR_LOG_FILE = os.path.join(BASE_DIR, "error_log.txt")
+ERROR_LOG_FILE = os.path.join(BASE_DIR, "app_log.txt")
 
 
 Intent = autoclass('android.content.Intent')
