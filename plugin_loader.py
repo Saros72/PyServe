@@ -47,7 +47,7 @@ def check_plugins(log_func, error_func):
 
         except Exception as e:
             # UI krátké
-            error_func(f"{folder}: ERROR")
+            log_func(f"{folder}: ERROR")
 
 
 # -----------------------

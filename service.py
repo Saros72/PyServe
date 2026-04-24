@@ -31,6 +31,95 @@ from plugin_loader import load_plugins
 
 app = Bottle()
 
+@app.route('/')
+def home():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {
+                margin: 0;
+                background: #000;
+                color: #fff;
+                font-family: Arial, sans-serif;
+            }
+
+            .header {
+                background: #0D47A1;
+                padding: 14px;
+                font-size: 18px;
+                font-weight: bold;
+            }
+
+            .card {
+                margin: 12px;
+                padding: 14px;
+                background: #111;
+                border-radius: 10px;
+                font-size: 14px;
+            }
+
+            .row {
+                margin-top: 8px;
+            }
+
+            .ok {
+                color: #4CAF50;
+            }
+
+            .link {
+                display: block;
+                margin-top: 10px;
+                padding: 10px;
+                background: #0D47A1;
+                border-radius: 8px;
+                text-align: center;
+                text-decoration: none;
+                color: #fff;
+                font-weight: bold;
+            }
+
+            .link:active {
+                background: #1565C0;
+            }
+        </style>
+    </head>
+
+    <body>
+
+        <div class="header">PyServe</div>
+
+        <div class="card">
+            <b>Server Status</b>
+            <div class="row">Bottle: <span class="ok">RUNNING</span></div>
+            <div class="row">WebDAV: <span class="ok">RUNNING</span></div>
+        </div>
+
+        <div class="card">
+            <b>Access</b>
+
+            <a class="link" href="#" onclick="openDav()">Open WebDAV</a>
+        </div>
+
+        <div class="card">
+            <b>Plugins</b>
+
+            <a class="link" href="/demo">Demo Plugin</a>
+        </div>
+
+        <script>
+            function openDav() {
+                const url = "http://" + location.hostname + ":9667";
+                window.location.href = url;
+            }
+        </script>
+
+    </body>
+    </html>
+    """
+
 # -----------------------
 # 🔥 WebDAV SAFE IMPORT
 # -----------------------

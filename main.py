@@ -242,7 +242,8 @@ class App(MDApp):
                 return True
             if self.running:
                 toast("Server continues running in background")
-            return False
+            Clock.schedule_once(lambda dt: self.stop(), 0.5)
+            return True
 
         if key in (13, 271, 23):
             return True
@@ -465,7 +466,7 @@ class App(MDApp):
     # -----------------------
     # 🔑 PERMISSION DIALOG 
     # -----------------------
-    def show_permission_dialog(self):
+    def show_permission_dialogg(self):
         # 1. Definujeme tlačítko ALLOW (to tam je vždy)
         allow_button = MDRaisedButton(
             text="ALLOW",
@@ -506,6 +507,37 @@ class App(MDApp):
         self.dialog.ids.text.text_color = [0, 0, 0, 1]
 
         self.dialog.open()
+
+
+    def show_permission_dialog(self):
+        # 1. Vytvoříme přímo tlačítko ALLOW
+        allow_button = MDRaisedButton(
+            text="ALLOW",
+            md_bg_color=self.custom_blue,
+            on_release=lambda x: self.allow_permissions()
+        )
+
+        # 2. Vytvoříme dialog přímo s tímto tlačítkem
+        self.dialog = MDDialog(
+            title="Warning",
+            text=(
+                "This app runs a local server in a foreground service.\n"
+                "To work properly, it requires access to all files.\n\n"
+                "Allow access in system settings?"
+            ),
+            radius=[16, 16, 16, 16],
+            buttons=[allow_button], # Jen jedno tlačítko v seznamu
+            auto_dismiss=False      # Volitelné: uživatel musí kliknout na ALLOW, aby dialog zmizel
+        )
+
+        # 3. Styling
+        self.dialog.ids.title.theme_text_color = "Custom"
+        self.dialog.ids.title.text_color = [0.9, 0.2, 0.2, 1] 
+        self.dialog.ids.text.theme_text_color = "Custom"
+        self.dialog.ids.text.text_color = [0, 0, 0, 1]
+
+        self.dialog.open()
+
 
 
     # -----------------------
