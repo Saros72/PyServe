@@ -23,9 +23,9 @@ orientation = landscape
 fullscreen = 0
 
 # --- ANDROID SDK ---
-android.api = 31
-android.minapi = 21
-android.target = 31
+#android.api = 31
+#android.minapi = 21
+#android.target = 31
 
 # --- ANDROID PERMISSION ---
 android.permissions = INTERNET,POST_NOTIFICATIONS,FOREGROUND_SERVICE,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,MANAGE_EXTERNAL_STORAGE
@@ -45,8 +45,8 @@ android.add_resources = %(source.dir)s/res
 android.presplash_color = #FFFFFF
 
 # --- HOOK/BOOTSTRAP ---
-p4a.hook = p4a/hook.py
-p4a.bootstrap = sdl2
+#p4a.hook = p4a/hook.py
+#p4a.bootstrap = sdl2
 
 # --- DEBUG ---
 log_level = 2
