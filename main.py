@@ -118,7 +118,7 @@ class App(MDApp):
         self.log_buffer = []
         self.log_queue = []
 
-        Clock.schedule_interval(self._process_log_queue, 0.2)
+        Clock.schedule_interval(self._process_log_queue, 0.1)
 
 
         # -----------------------
@@ -451,7 +451,6 @@ class App(MDApp):
     def open_paypal(self):
         try:
             webbrowser.open("https://paypal.me/petrsarka")
-            self.add_log("Opening PayPal.Me")
         except Exception as e:
             self.add_error(f"PAYPAL ERROR: {e}")
 
