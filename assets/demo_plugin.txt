@@ -3,12 +3,29 @@ import time, json
 
 
 # -----------------------
-# DEMO STREAMS
+# STREAMS
 # -----------------------
 STREAMS = {
-    "low": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-    "mid": "https://test-streams.mux.dev/test_001/stream.m3u8",
-    "high": "https://sample.vodobox.net/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8"
+    "1": {
+        "url": "https://github.com/ECNU-CILAB/Pixabay100/raw/refs/heads/main/videos/bird_-_46026%20(Original).mp4",
+        "title": "Bird",
+        "quality": "Full HD"
+    },
+    "2": {
+        "url": "https://github.com/ECNU-CILAB/Pixabay100/raw/refs/heads/main/videos/jellyfish_-_110877%20(Original).mp4",
+        "title": "Jellyfish",
+        "quality": "Full HD"
+    },
+    "3": {
+        "url": "https://github.com/ECNU-CILAB/Pixabay100/raw/refs/heads/main/videos/138588%20(1080p).mp4",
+        "title": "Ocean",
+        "quality": "Full HD"
+    },
+    "4": {
+        "url": "https://github.com/ECNU-CILAB/Pixabay100/raw/refs/heads/main/videos/waterfall_-_37088%20(1080p).mp4",
+        "title": "Waterfall",
+        "quality": "Full HD"
+    }
 }
 
 
@@ -18,108 +35,163 @@ STREAMS = {
 def register(app):
 
     # -----------------------
-    # 1. HTML PAGE (UI)
+    # UI PAGE
     # -----------------------
     @app.route("/demo")
     def demo_page():
-        return """
+        return f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Demo Plugin</title>
+
             <style>
-                body {
-                    background: #121212;
-                    color: #fff;
-                    font-family: Arial, sans-serif;
+                body {{
                     margin: 0;
-                    padding: 20px;
-                    text-align: center;
-                }
+                    background: #000;
+                    color: #fff;
+                    font-family: Arial;
+                }}
 
-                h1 {
-                    font-size: 2em;
-                    margin-bottom: 10px;
-                }
+                .header {{
+                    background: #0D47A1;
+                    padding: 14px;
+                    font-size: 18px;
+                    font-weight: bold;
+                }}
 
-                p {
-                    color: #aaa;
-                }
+                video#player {{
+                    width: 100%;
+                    max-height: 260px;
+                    background: black;
+                }}
 
-                .container {
-                    max-width: 500px;
-                    margin: auto;
-                }
+                .list {{
+                    padding: 10px;
+                }}
 
-                .btn {
-                    display: block;
-                    padding: 15px;
-                    margin: 10px 0;
-                    background: #1f1f1f;
+                .item {{
+                    display: flex;
+                    background: #111;
                     border-radius: 10px;
+                    margin-bottom: 10px;
+                    overflow: hidden;
+                }}
+
+                .thumb {{
+                    width: 140px;
+                    height: 80px;
+                    object-fit: cover;
+                    background: black;
+                }}
+
+                .info {{
+                    flex: 1;
+                    padding: 10px;
+                }}
+
+                .title {{
+                    font-size: 14px;
+                    font-weight: bold;
+                }}
+
+                .meta {{
+                    font-size: 12px;
+                    color: #aaa;
+                    margin-top: 4px;
+                }}
+
+                .btn {{
+                    margin-top: 6px;
+                    padding: 6px;
+                    background: #0D47A1;
+                    border-radius: 6px;
+                    text-align: center;
+                    cursor: pointer;
+                }}
+
+                .btn:active {{
+                    background: #1565C0;
+                }}
+
+                .footer {{
+                    padding: 12px;
+                }}
+
+                .api {{
+                    display: block;
+                    padding: 10px;
+                    background: #222;
+                    border-radius: 8px;
+                    text-align: center;
                     text-decoration: none;
                     color: #fff;
-                    font-size: 1.1em;
-                    transition: 0.2s;
-                }
-
-                .btn:hover {
-                    background: #333;
-                }
-
-                .api {
-                    background: #2a2a2a;
-                }
-
-                .stream-low { background: #2e7d32; }
-                .stream-mid { background: #f9a825; }
-                .stream-high { background: #c62828; }
+                }}
             </style>
         </head>
 
         <body>
-            <div class="container">
-                <h1>🚀 Demo Plugin</h1>
-                <p>Test server endpoints</p>
 
-                <a class="btn api" href="/demo/api">📡 API JSON</a>
+            <div class="header">Demo Plugin</div>
 
-                <a class="btn stream-low" href="/demo/stream/low">🎬 Low Quality</a>
-                <a class="btn stream-mid" href="/demo/stream/mid">🎬 Medium Quality</a>
-                <a class="btn stream-high" href="/demo/stream/high">🎬 High Quality</a>
+            <!-- PLAYER -->
+            <video id="player" autoplay muted playsinline>
+                <source src="/demo/stream/1">
+            </video>
 
-                <hr style="margin:20px 0; border-color:#333;">
-
-                <p>Player (HLS supported)</p>
-                <video controls width="100%">
-                    <source src="/demo/stream/high" type="application/x-mpegURL">
-                </video>
+            <!-- LIST -->
+            <div class="list">
+                {"".join([
+                    f'''
+                    <div class="item">
+                        <video class="thumb" muted preload="metadata">
+                            <source src="/demo/stream/{k}">
+                        </video>
+                        <div class="info">
+                            <div class="title">{v["title"]}</div>
+                            <div class="meta">Quality: {v["quality"]}</div>
+                            <div class="btn" onclick="play('{k}')">▶ Play</div>
+                        </div>
+                    </div>
+                    ''' for k, v in STREAMS.items()
+                ])}
             </div>
+
+            <!-- FOOTER -->
+            <div class="footer">
+                <a class="api" href="/demo/api">📡 API</a>
+            </div>
+
+            <script>
+                function play(q) {{
+                    const player = document.getElementById("player");
+                    player.src = "/demo/stream/" + q;
+                    player.load();
+                    player.play();
+                }}
+            </script>
+
         </body>
         </html>
         """
 
 
     # -----------------------
-    # 2. REST API (JSON)
+    # API
     # -----------------------
     @app.route("/demo/api")
     def demo_api():
         response.content_type = "application/json"
-
-        data = {
+        return json.dumps({
             "status": "ok",
             "time": time.time(),
             "streams": STREAMS
-        }
-        return json.dumps(data, indent=4)
+        }, indent=4)
 
 
     # -----------------------
-    # 3. STREAM REDIRECT
+    # STREAM
     # -----------------------
     @app.route("/demo/stream/<quality>")
     def demo_stream(quality):
-        stream = STREAMS.get(quality, STREAMS["low"])
-        return redirect(stream)
+        return redirect(STREAMS.get(quality, STREAMS["1"])["url"])
