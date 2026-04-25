@@ -29,7 +29,7 @@ Plugins are located at:
 
 Each plugin is a separate folder:
 
-```
+```text
 PyServe/
  ├── demo/
  │   └── default.py
@@ -153,7 +153,7 @@ To ensure the app works correctly on Android:
 
 ## 📂 Project structure
 
-```
+```text
 PyServe/
  ├── main.py
  ├── plugin_loader.py
@@ -176,13 +176,45 @@ PyServe/
 - UI logging system
 - Android foreground service support
 - Open local web interface
+- Built-in WebDAV server (file transfer over LAN)
+
+---
+
+## 📦 WebDAV server
+
+PyServe includes a built-in WebDAV server running on:
+
+http://127.0.0.1:9667/
+
+### What is it for?
+- upload plugins to another device (e.g. Android TV)
+- transfer files over local network
+- access storage without USB cables
+
+### Recommended clients
+- MiXplorer (Android)
+- Solid Explorer
+- other WebDAV-compatible file managers
+
+### Example usage
+1. Open file manager on another device (e.g. Android TV)
+2. Add new WebDAV connection
+3. Enter your device IP:
+   http://YOUR_IP:9667/
+4. Browse and upload files directly
+
+### Tip
+Use it to quickly deploy plugins without rebuilding the app.
+
+### Notes
+- Works only on the same local network (LAN)
+- No additional setup required
 
 ---
 
 ## 🧪 Example plugin
 
 ```python
-
 def register(app):
 
     @route("/hello")
@@ -199,5 +231,3 @@ def register(app):
 - Plugin-based architecture experiments
 - Offline server tools
 - Learning Bottle and Python web servers
-```
-```
