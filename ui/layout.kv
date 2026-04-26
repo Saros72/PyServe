@@ -1,3 +1,5 @@
+<ClickableLabel@ButtonBehavior+MDLabel>:
+
 MDScreen:
     md_bg_color: 0.82, 0.90, 1, 1 
     MDNavigationLayout:
@@ -16,7 +18,7 @@ MDScreen:
                         anchor_title: "left"
                         elevation: 0
                         md_bg_color: app.custom_blue
-                        left_action_items: [["menu", lambda x: nav_drawer.set_state("open")]]
+                        left_action_items: [] if app.is_tv else [["menu", lambda x: nav_drawer.set_state("open")]]
 
                     MDBoxLayout:
                         orientation: "vertical"
@@ -35,40 +37,18 @@ MDScreen:
 
                             MDBoxLayout:
                                 orientation: "horizontal"
-                                padding: [dp(25), 0, dp(10), 0]
-                                spacing: dp(10)
+                                padding: [dp(10), 0, dp(10), 0]
 
-                                MDLabel:
+                                ClickableLabel:
                                     text: app.url_display if app.url_display else "http://localhost:9666"
                                     halign: "left"
                                     valign: "middle"
                                     theme_text_color: "Custom"
                                     text_color: app.custom_blue
-
                                     font_style: "H6"
                                     bold: True
-
-                                    size_hint_x: 1
-                                    shorten: False
                                     text_size: self.size
-
-                                MDRelativeLayout:
-                                    size_hint_x: None
-                                    width: dp(70)
-
-                                    Image:
-                                        source: "assets/web_green.png" if app.running else "assets/web_red.png"
-                                        size_hint: None, None
-                                        size: dp(42), dp(42)
-                                        pos_hint: {"center_x": 0.5, "center_y": 0.5}
-
-                                    Button:
-                                        size_hint: 1, 1
-                                        background_normal: ""
-                                        background_down: ""
-                                        background_color: 0, 0, 0, 0
-                                        on_release: app.open_web()
-                                        disabled: not app.running
+                                    on_release: app.open_web() if app.running else None
 
                         # LOG
                         MDCard:
@@ -103,81 +83,92 @@ MDScreen:
                                 md_bg_color: app.custom_blue
                                 on_release: app.toggle_server()
 
+        # =========================
+        # DRAWER (FIXED VERSION)
+        # =========================
         MDNavigationDrawer:
             id: nav_drawer
-#            md_bg_color: 0.82, 0.90, 1, 1
             radius: (0, 16, 16, 0)
 
+            opacity: 0 if app.is_tv else 1
+            disabled: app.is_tv
+            swipe_edge_width: 0 if app.is_tv else dp(20)
+
             MDBoxLayout:
-                orientation: 'vertical'
+                orientation: "vertical"
 
-                MDNavigationDrawerMenu:
+                # SCROLLABLE MENU
+                MDScrollView:
 
-                    MDNavigationDrawerItem:
-                        icon: "puzzle"
-                        text: "Plugins"
-                        icon_color: app.custom_blue
-                        text_color: app.custom_blue
-                        selected_color: app.custom_blue
-                        focus_color: 0, 0, 0, 0 
-                        on_release:
-                            app.root.ids.nav_drawer.set_state("close")
-                            app.open_plugins()
+                    MDNavigationDrawerMenu:
 
-                    MDNavigationDrawerDivider:
+                        MDNavigationDrawerItem:
+                            icon: "puzzle"
+                            text: "Plugins"
+                            icon_color: app.custom_blue
+                            text_color: app.custom_blue
+                            selected_color: app.custom_blue
+                            focus_color: 0, 0, 0, 0
+                            on_release:
+                                app.root.ids.nav_drawer.set_state("close")
+                                app.open_plugins()
 
-                    MDNavigationDrawerItem:
-                        icon: "github"
-                        text: "GitHub"
-                        icon_color: app.custom_blue
-                        text_color: app.custom_blue
-                        selected_color: app.custom_blue
-                        focus_color: 0, 0, 0, 0 
-                        on_release:
-                            app.root.ids.nav_drawer.set_state("close")
-                            app.open_github()
+                        MDNavigationDrawerDivider:
 
-                    MDNavigationDrawerItem:
-                        icon: "email"
-                        text: "E-mail"
-                        icon_color: app.custom_blue
-                        text_color: app.custom_blue
-                        selected_color: app.custom_blue
-                        focus_color: 0, 0, 0, 0 
-                        on_release:
-                            app.root.ids.nav_drawer.set_state("close")
-                            app.send_email()
+                        MDNavigationDrawerItem:
+                            icon: "github"
+                            text: "GitHub"
+                            icon_color: app.custom_blue
+                            text_color: app.custom_blue
+                            selected_color: app.custom_blue
+                            focus_color: 0, 0, 0, 0
+                            on_release:
+                                app.root.ids.nav_drawer.set_state("close")
+                                app.open_github()
 
-                    MDNavigationDrawerItem:
-                        icon: "heart"
-                        text: "Support Project"
-                        icon_color: app.custom_blue
-                        text_color: app.custom_blue
-                        selected_color: app.custom_blue
-                        focus_color: 0, 0, 0, 0 
-                        on_release:
-                            app.root.ids.nav_drawer.set_state("close")
-                            app.open_paypal()
+                        MDNavigationDrawerItem:
+                            icon: "email"
+                            text: "E-mail"
+                            icon_color: app.custom_blue
+                            text_color: app.custom_blue
+                            selected_color: app.custom_blue
+                            focus_color: 0, 0, 0, 0
+                            on_release:
+                                app.root.ids.nav_drawer.set_state("close")
+                                app.send_email()
 
-                    MDNavigationDrawerDivider:
+                        MDNavigationDrawerItem:
+                            icon: "heart"
+                            text: "Support Project"
+                            icon_color: app.custom_blue
+                            text_color: app.custom_blue
+                            selected_color: app.custom_blue
+                            focus_color: 0, 0, 0, 0
+                            on_release:
+                                app.root.ids.nav_drawer.set_state("close")
+                                app.open_paypal()
 
-                    MDNavigationDrawerItem:
-                        icon: "share-variant"
-                        text: "Share"
-                        icon_color: app.custom_blue
-                        text_color: app.custom_blue
-                        selected_color: app.custom_blue
-                        focus_color: 0, 0, 0, 0 
-                        on_release:
-                            app.root.ids.nav_drawer.set_state("close")
-                            app.open_share()
-                Widget:
+                        MDNavigationDrawerDivider:
 
-                MDLabel:
+                        MDNavigationDrawerItem:
+                            icon: "share-variant"
+                            text: "Share"
+                            icon_color: app.custom_blue
+                            text_color: app.custom_blue
+                            selected_color: app.custom_blue
+                            focus_color: 0, 0, 0, 0
+                            on_release:
+                                app.root.ids.nav_drawer.set_state("close")
+                                app.open_share()
 
-                    text: "© 2026 PyServe v0.1.0\nCreated by Sároš"
-                    theme_text_color: "Custom"
-                    text_color: 0.05, 0.27, 0.63, 1
-                    halign: "center"
+                # FIXED FOOTER (OUTSIDE SCROLL)
+                MDBoxLayout:
                     size_hint_y: None
-                    height: self.texture_size[1] + dp(20)
+                    height: dp(50)
+                    padding: dp(10)
+
+                    MDLabel:
+                        text: "© 2026 PyServe v0.1.0\nCreated by Sároš"
+                        theme_text_color: "Custom"
+                        text_color: 0.05, 0.27, 0.63, 1
+                        halign: "center"
