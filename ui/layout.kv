@@ -14,7 +14,8 @@ MDScreen:
                     orientation: "vertical"
 
                     MDTopAppBar:
-                        title: "PyServe"
+#                        title: "PyServe"
+                        title: "[size=28sp][b]PyServe[/b][/size]" if app.is_tv else "PyServe"
                         anchor_title: "center" if app.is_tv else "left"
                         elevation: 0
 #                        md_bg_color: app.custom_blue
@@ -36,7 +37,7 @@ MDScreen:
                         # MAIN CONTENT
                         MDBoxLayout:
                             orientation: "vertical"
-                            size_hint_x: 1 if not app.is_tv else 0.7
+                            size_hint_x: 1 if not app.is_tv else 0.6
                             padding: "10dp"
                             spacing: "10dp"
 
