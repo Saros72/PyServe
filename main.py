@@ -125,7 +125,7 @@ class App(MDApp):
         self.log_buffer = []
         self.log_queue = []
 
-        Clock.schedule_interval(self._process_log_queue, 0.1)
+        Clock.schedule_interval(self._process_log_queue, 0.2)
 
 
         # -----------------------
@@ -146,6 +146,8 @@ class App(MDApp):
                 self.is_tv = True
         except:
             self.is_tv = False
+
+#        self.is_tv = True
 
         kv_file = "ui/layout.kv"
 
@@ -330,7 +332,7 @@ class App(MDApp):
             def do_scroll(dt2):
                 scroll_view.scroll_y = 0 if log_label.height > scroll_view.height else 1
 
-            Clock.schedule_once(do_scroll, 0)
+            Clock.schedule_once(do_scroll, 0.03)
 
         except Exception as e:
             print(f"Log scroll error: {e}")
@@ -391,6 +393,12 @@ class App(MDApp):
     def toggle_server(self):
         if not self.running:
 
+            self.log_buffer = []
+            try:
+                self.root.ids.log_label.text = ""
+            except:
+                pass
+
             if not self.check_and_prepare():
                 return
 
@@ -400,7 +408,7 @@ class App(MDApp):
             Clock.schedule_once(lambda dt: check_plugins(self.add_log, self.add_error), 0)
 
             try:
-#                Clock.schedule_once(lambda dt: start_service_python(), 5)
+                #Clock.schedule_once(lambda dt: start_service_python(), 5)
                 service = autoclass('org.pyserve.pyserve.ServiceServer')
                 mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
                 service.start(mActivity, 'small_icon', 'PyServe', 'Server running...', '')
