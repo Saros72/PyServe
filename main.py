@@ -69,6 +69,13 @@ def share_text(text):
     activity.startActivity(chooser)
 
 
+def start_service_python():
+    import threading
+    import service
+    threading.Thread(target=service.start_bottle_thread, daemon=True).start()
+    threading.Thread(target=service.start_dav_thread, daemon=True).start()
+
+
 # -----------------------
 # 🔥 SERVER CHECK
 # -----------------------
@@ -140,7 +147,7 @@ class App(MDApp):
         except:
             self.is_tv = False
 
-        kv_file = "ui/layout_tv.kv" if self.is_tv else "ui/layout.kv"
+        kv_file = "ui/layout.kv"
 
         root = Builder.load_file(kv_file)
 
@@ -153,7 +160,7 @@ class App(MDApp):
 
     def on_start(self):
 
-        self.url_display = f"http://{get_ip()}:9666" if self.is_tv else "http://127.0.0.1:9666"
+        self.url_display = f"http://{get_ip()}:9666"
         self.add_log("=== APP START ===")
 
         self.update_system_bars()
@@ -231,6 +238,14 @@ class App(MDApp):
 
     def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
         if key == 27:  # Back button
+
+            try:
+                if self.root.ids.nav_drawer.state == "open":
+                    self.root.ids.nav_drawer.set_state("close")
+                    return True
+            except:
+                pass
+
             if self.dialog and self.dialog.parent:
                 self.dialog.dismiss()
                 return True
@@ -385,6 +400,7 @@ class App(MDApp):
             Clock.schedule_once(lambda dt: check_plugins(self.add_log, self.add_error), 0)
 
             try:
+#                Clock.schedule_once(lambda dt: start_service_python(), 5)
                 service = autoclass('org.pyserve.pyserve.ServiceServer')
                 mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
                 service.start(mActivity, 'small_icon', 'PyServe', 'Server running...', '')
@@ -392,16 +408,25 @@ class App(MDApp):
                 self.add_error(f"SERVICE START ERROR: {e}")
                 return
 
-            def check(dt):
+            self.start_attempts = 0
+
+            def check_server(dt):
                 if is_server_running():
                     self.running = True
                     self.add_log("Server running OK")
-                else:
-                    self.running = False
-                    self.button_text = "START"
-                    self.add_error("Server failed")
+                    return False
 
-            Clock.schedule_once(check, 2)
+                self.start_attempts += 1
+
+                if self.start_attempts > 10:
+                    self.add_error("Server failed to start")
+                    self.button_text = "START"
+                    return False
+
+                self.add_log("Waiting for server...")
+                return True
+
+            Clock.schedule_interval(check_server, 1)
 
         else:
             self.button_text = "START"
