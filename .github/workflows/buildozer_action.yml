@@ -2,6 +2,10 @@ name: Android Build
 
 on:
   workflow_dispatch:
+    inputs:
+      key:
+        description: "Build key"
+        required: true
 
 permissions:
   contents: write
@@ -11,6 +15,14 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+      # 🔐 SECURITY CHECK (jen ty znáš klíč)
+      - name: Check access
+        run: |
+          if [ "${{ github.event.inputs.key }}" != "${{ secrets.BUILD_KEY }}" ]; then
+            echo "❌ Unauthorized"
+            exit 1
+          fi
+
       - uses: actions/checkout@v4
 
       # Cache Buildozer global directory
