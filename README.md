@@ -39,6 +39,21 @@ PyServe/
 
 ---
 
+## 🔌 Plugins repository
+
+Official plugin collection for PyServe:
+
+👉 [PyServe Plugins](https://github.com/Saros72/PyServe-Plugins)
+
+Contains:
+- ready-to-use plugins
+- streaming providers
+- web scrapers
+- integrations for external applications (e.g. Streamlet)
+
+Plugins can be placed into:
+`/storage/emulated/0/PyServe/`
+
 ## 📦 Demo plugin
 
 The application automatically creates a **demo plugin** on first launch.
