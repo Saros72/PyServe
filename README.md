@@ -231,3 +231,10 @@ def register(app):
 - Plugin-based architecture experiments
 - Offline server tools
 - Learning Bottle and Python web servers
+
+
+## 🎬 Demo
+
+Short demonstration of the app running on Android device (plugin loading, UI, and local server).
+
+[![Watch the video](https://img.youtube.com/vi/FnYu52gk3jo/0.jpg)](https://youtu.be/FnYu52gk3jo)
